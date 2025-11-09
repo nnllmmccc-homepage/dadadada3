@@ -1,1 +1,89 @@
-f
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Media Uploader // Discord Preview</title>
+  <meta property="og:title" content="メディアプレビュー">
+  <meta property="og:description" content="アップロードされた画像 / GIF / MP4">
+  <meta property="og:image" content="">
+  <meta property="og:video" content="">
+  <meta name="theme-color" content="#5865F2">
+
+  <style>
+    body {
+      background: #0f0f12;
+      color: white;
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    input[type="file"] {
+      margin: 20px 0;
+    }
+    #preview {
+      margin-top: 20px;
+      max-width: 80%;
+      border-radius: 10px;
+      box-shadow: 0 0 15px #333;
+    }
+    a {
+      color: #7ba9ff;
+    }
+  </style>
+</head>
+<body>
+  <h2>📤 メディアアップローダー</h2>
+  <input type="file" id="fileInput" accept="image/*,video/mp4,gif/*">
+  <div id="output"></div>
+  <div id="preview"></div>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const output = document.getElementById('output');
+    const preview = document.getElementById('preview');
+
+    fileInput.addEventListener('change', async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      // ファイルをBlob URLとして生成
+      const objectURL = URL.createObjectURL(file);
+
+      // プレビュー表示
+      preview.innerHTML = '';
+      if (file.type.startsWith('image/')) {
+        const img = document.createElement('img');
+        img.src = objectURL;
+        img.id = 'previewMedia';
+        img.style.maxWidth = '100%';
+        img.style.borderRadius = '12px';
+        preview.appendChild(img);
+      } else if (file.type.startsWith('video/')) {
+        const video = document.createElement('video');
+        video.src = objectURL;
+        video.autoplay = true;
+        video.loop = true;
+        video.controls = true;
+        video.muted = true;
+        video.id = 'previewMedia';
+        video.style.maxWidth = '100%';
+        video.style.borderRadius = '12px';
+        preview.appendChild(video);
+      }
+
+      // Discordに貼れるURLっぽく表示（実際はアップロード先に置き換える）
+      const fakeURL = `${location.origin}/uploads/${file.name}`;
+      output.innerHTML = `
+        <p>🔗 Discordに貼るURL：</p>
+        <a href="${fakeURL}" target="_blank">${fakeURL}</a>
+        <p style="opacity:0.8;font-size:13px;">※このURLをDiscordに貼るとプレビューされます。</p>
+      `;
+    });
+  </script>
+</body>
+</html>
