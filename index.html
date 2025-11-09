@@ -394,38 +394,22 @@
 
             countElement.textContent = visitors.length;
             
-            // 既存のカードの展開状態を保存
-            const expandedCards = new Set();
-            container.querySelectorAll('.visitor-card.expanded').forEach(card => {
-                const index = card.getAttribute('data-index');
-                if (index) expandedCards.add(index);
-            });
-            
             container.innerHTML = '';
             visitors.forEach((visitor, index) => {
                 const card = document.createElement('div');
                 card.className = 'visitor-card';
-                card.setAttribute('data-index', index);
-                
-                // 以前展開されていた場合は展開状態を維持
-                if (expandedCards.has(String(index))) {
-                    card.classList.add('expanded');
-                }
                 
                 const timestamp = new Date(visitor.timestamp).toLocaleString('ja-JP');
                 
                 card.innerHTML = `
-                    <div class="visitor-header">
-                        <h3 style="color: #ff3333;">開いた人 #${index + 1}</h3>
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <div class="timestamp">${timestamp}</div>
-                            <div class="expand-icon">▼</div>
-                        </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="color: #ff3333;">訪問者 #${index + 1}</h3>
+                        <div class="timestamp">${timestamp}</div>
                     </div>
                     <div class="visitor-info">
                         <div class="info-item">
                             <div class="info-label">パブリックIP</div>
-                            <div class="info-value">${visitor.publicIp || '取得中...'}</div>
+                            <div class="info-value">${visitor.publicIp}</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">ローカルIP</div>
@@ -433,31 +417,31 @@
                         </div>
                         <div class="info-item">
                             <div class="info-label">ブラウザ</div>
-                            <div class="info-value">${visitor.browser || '不明'}</div>
+                            <div class="info-value">${visitor.browser}</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">OS</div>
-                            <div class="info-value">${visitor.os || '不明'}</div>
+                            <div class="info-value">${visitor.os}</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">解像度</div>
-                            <div class="info-value">${visitor.screenResolution || '不明'}</div>
+                            <div class="info-value">${visitor.screenResolution}</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">言語</div>
-                            <div class="info-value">${visitor.language || '不明'}</div>
+                            <div class="info-value">${visitor.language}</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">タイムゾーン</div>
-                            <div class="info-value">${visitor.timezone || '不明'}</div>
+                            <div class="info-value">${visitor.timezone}</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">プラットフォーム</div>
-                            <div class="info-value">${visitor.platform || '不明'}</div>
+                            <div class="info-value">${visitor.platform}</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">メモリ</div>
-                            <div class="info-value">${visitor.memory || '不明'}</div>
+                            <div class="info-value">${visitor.memory}</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">接続情報</div>
@@ -465,15 +449,10 @@
                         </div>
                         <div class="info-item" style="grid-column: 1 / -1;">
                             <div class="info-label">ユーザーエージェント</div>
-                            <div class="info-value" style="font-size: 0.85rem;">${visitor.userAgent || '不明'}</div>
+                            <div class="info-value" style="font-size: 0.85rem;">${visitor.userAgent}</div>
                         </div>
                     </div>
                 `;
-                
-                // カードをクリックして展開/折りたたみ
-                card.addEventListener('click', function() {
-                    this.classList.toggle('expanded');
-                });
                 
                 container.appendChild(card);
             });
