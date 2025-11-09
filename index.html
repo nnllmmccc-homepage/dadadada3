@@ -1,119 +1,89 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Media Uploader // Discord Preview</title>
-  <meta name="theme-color" content="#5865F2">
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
-    body {
-      background: #0f0f12;
-      color: white;
-      font-family: 'Poppins', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
-    h2 {
-      font-weight: 600;
-      margin-bottom: 10px;
-      font-size: 1.6rem;
-    }
-    input[type=file] {
-      margin: 10px 0;
-      color: #ccc;
-    }
-    button {
-      background: #5865F2;
-      border: none;
-      padding: 10px 20px;
-      color: white;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 10px;
-      transition: 0.2s;
-    }
-    button:hover { opacity: 0.85; }
-    #preview {
-      margin-top: 25px;
-      max-width: 85%;
-    }
-    video, img {
-      max-width: 100%;
-      border-radius: 12px;
-      box-shadow: 0 0 20px #0008;
-    }
-    #linkBox {
-      margin-top: 20px;
-      background: #1a1a22;
-      padding: 15px 20px;
-      border-radius: 10px;
-      text-align: center;
-      box-shadow: 0 0 10px #0004;
-    }
-    #linkBox a {
-      color: #7ba9ff;
-      text-decoration: none;
-      font-weight: 600;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>プロフェッショナルファイルアップローダー</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #333;
+        }
+        .upload-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 300px;
+            text-align: center;
+        }
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #output {
+            margin-top: 20px;
+            text-align: left;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-  <h2>📤 メディアアップローダー</h2>
-  <p style="opacity:0.8;">画像・GIF・MP4 を選択してください</p>
-  <input type="file" id="fileInput" accept="image/*,video/mp4,gif/*">
-  <button onclick="generateLink()">リンクを生成</button>
-  <div id="preview"></div>
-  <div id="linkBox"></div>
+    <div class="upload-container">
+        <h1>ファイルをアップロード</h1>
+        <input type="file" id="fileInput" multiple>
+        <button id="uploadButton">アップロード</button>
+        <div id="output"></div>
+    </div>
 
-  <script>
-    function randomName(len = 6) {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-      return Array.from({length: len}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-    }
+    <script>
+        document.getElementById('uploadButton').addEventListener('click', function() {
+            const files = document.getElementById('fileInput').files;
+            const output = document.getElementById('output');
+            output.innerHTML = ''; // クリア
 
-    function generateLink() {
-      const fileInput = document.getElementById('fileInput');
-      const file = fileInput.files[0];
-      const preview = document.getElementById('preview');
-      const linkBox = document.getElementById('linkBox');
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const randomName = generateRandomName(file.name);
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(file);
+                link.innerText = randomName;
+                link.target = '_blank'; // 新しいタブで開く
+                output.appendChild(link);
+                output.appendChild(document.createElement('br'));
+            }
+        });
 
-      if (!file) {
-        alert("ファイルを選択してください。");
-        return;
-      }
-
-      const ext = file.name.split('.').pop();
-      const randomFileName = randomName() + '.' + ext;
-      const domain = location.origin; // あなたのドメイン
-      const finalURL = `${domain}/uploads/${randomFileName}`;
-
-      preview.innerHTML = '';
-      if (file.type.startsWith('image/')) {
-        const img = document.createElement('img');
-        img.src = URL.createObjectURL(file);
-        preview.appendChild(img);
-      } else if (file.type.startsWith('video/')) {
-        const video = document.createElement('video');
-        video.src = URL.createObjectURL(file);
-        video.controls = true;
-        video.loop = true;
-        video.autoplay = true;
-        preview.appendChild(video);
-      }
-
-      linkBox.innerHTML = `
-        <p>🎯 Discordに貼るリンク：</p>
-        <a href="${finalURL}" target="_blank">${finalURL}</a>
-        <p style="font-size:13px;opacity:0.7;">このリンクをDiscordに貼るとプレビューが表示されます。</p>
-        <p style="color:#ff7070;font-size:12px;">※実際にはこのファイルを「uploads」フォルダに同名で置いてください。</p>
-      `;
-    }
-  </script>
+        function generateRandomName(originalName) {
+            const randomString = Math.random().toString(36).substring(2, 10);
+            const extension = originalName.split('.').pop();
+            return `${randomString}.${extension}`;
+        }
+    </script>
 </body>
 </html>
