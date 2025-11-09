@@ -3,87 +3,82 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Media Uploader // Discord Preview</title>
-  <meta property="og:title" content="メディアプレビュー">
-  <meta property="og:description" content="アップロードされた画像 / GIF / MP4">
+  <title>🎲 Random Media</title>
+
+  <!-- ===== Discord 埋め込み用 (JavaScriptではなくHTML生成時に設定される) ===== -->
+  <!-- 下の3行は後でJSがランダムに書き換える -->
+  <meta property="og:title" content="ランダムメディア">
+  <meta property="og:description" content="ランダムに画像 / GIF / 動画を表示します">
   <meta property="og:image" content="">
   <meta property="og:video" content="">
   <meta name="theme-color" content="#5865F2">
 
   <style>
     body {
-      background: #0f0f12;
-      color: white;
-      font-family: 'Poppins', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
       margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #000;
+      color: white;
+      font-family: sans-serif;
+      flex-direction: column;
     }
-    input[type="file"] {
-      margin: 20px 0;
+    video, img {
+      max-width: 90%;
+      border-radius: 16px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
     }
-    #preview {
-      margin-top: 20px;
-      max-width: 80%;
-      border-radius: 10px;
-      box-shadow: 0 0 15px #333;
-    }
-    a {
-      color: #7ba9ff;
+    small {
+      margin-top: 10px;
+      opacity: 0.6;
     }
   </style>
 </head>
 <body>
-  <h2>📤 メディアアップローダー</h2>
-  <input type="file" id="fileInput" accept="image/*,video/mp4,gif/*">
-  <div id="output"></div>
-  <div id="preview"></div>
+  <h2>🎲 ランダムメディア</h2>
+  <div id="media"></div>
+  <small>Discordに貼るURL: このページのURL</small>
 
   <script>
-    const fileInput = document.getElementById('fileInput');
-    const output = document.getElementById('output');
-    const preview = document.getElementById('preview');
+    // ここにランダムで出したいメディアのURLを入れる（直接リンク）
+    const mediaList = [
+      "https://i.imgur.com/H6l3Sl.mp4",
+      "https://i.imgur.com/8d5YQkF.gif",
+      "https://i.imgur.com/WzBvV7U.png",
+      "https://i.imgur.com/Y4OQ7kk.mp4"
+    ];
 
-    fileInput.addEventListener('change', async (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
+    // ランダムに1つ選ぶ
+    const random = mediaList[Math.floor(Math.random() * mediaList.length)];
 
-      // ファイルをBlob URLとして生成
-      const objectURL = URL.createObjectURL(file);
+    // メタタグを更新（Discord表示用）
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    const ogVideo = document.querySelector('meta[property="og:video"]');
 
-      // プレビュー表示
-      preview.innerHTML = '';
-      if (file.type.startsWith('image/')) {
-        const img = document.createElement('img');
-        img.src = objectURL;
-        img.id = 'previewMedia';
-        img.style.maxWidth = '100%';
-        img.style.borderRadius = '12px';
-        preview.appendChild(img);
-      } else if (file.type.startsWith('video/')) {
-        const video = document.createElement('video');
-        video.src = objectURL;
-        video.autoplay = true;
-        video.loop = true;
-        video.controls = true;
-        video.muted = true;
-        video.id = 'previewMedia';
-        video.style.maxWidth = '100%';
-        video.style.borderRadius = '12px';
-        preview.appendChild(video);
-      }
+    if (random.endsWith(".mp4")) {
+      ogVideo.setAttribute("content", random);
+      ogImage.setAttribute("content", random); // 予備としてもセット
+    } else {
+      ogImage.setAttribute("content", random);
+    }
 
-      // Discordに貼れるURLっぽく表示（実際はアップロード先に置き換える）
-      const fakeURL = `${location.origin}/uploads/${file.name}`;
-      output.innerHTML = `
-        <p>🔗 Discordに貼るURL：</p>
-        <a href="${fakeURL}" target="_blank">${fakeURL}</a>
-        <p style="opacity:0.8;font-size:13px;">※このURLをDiscordに貼るとプレビューされます。</p>
-      `;
-    });
+    // 表示
+    const container = document.getElementById("media");
+    if (random.endsWith(".mp4")) {
+      const video = document.createElement("video");
+      video.src = random;
+      video.autoplay = true;
+      video.loop = true;
+      video.muted = true;
+      video.controls = true;
+      container.appendChild(video);
+    } else {
+      const img = document.createElement("img");
+      img.src = random;
+      container.appendChild(img);
+    }
   </script>
 </body>
 </html>
