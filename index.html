@@ -2,24 +2,13 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>Simple Image Host</title>
+<title>Vercel Image/Video Host</title>
 <style>
 body {
   font-family: "Segoe UI", sans-serif;
-  text-align: center;
   background: #f5f5f5;
+  text-align: center;
   margin: 50px;
-}
-#preview img {
-  max-width: 300px;
-  margin-top: 10px;
-  border-radius: 10px;
-}
-#link {
-  margin-top: 15px;
-  font-weight: bold;
-  color: #0066cc;
-  word-break: break-all;
 }
 input, button {
   padding: 10px 15px;
@@ -32,14 +21,23 @@ button {
   color: white;
   cursor: pointer;
 }
-button:hover {
-  background: #005bcc;
+button:hover { background: #005bcc; }
+#preview img, #preview video {
+  max-width: 300px;
+  margin-top: 10px;
+  border-radius: 10px;
+}
+#link {
+  margin-top: 15px;
+  font-weight: bold;
+  color: #0078ff;
+  word-break: break-all;
 }
 </style>
 </head>
 <body>
-<h1>画像アップロード（仮想ホスト）</h1>
-<input type="file" id="fileInput" accept="image/*,video/mp4,image/gif">
+<h1>画像 / 動画 アップロード</h1>
+<input type="file" id="fileInput" accept="image/*,video/mp4">
 <button id="uploadBtn">アップロード</button>
 <div id="preview"></div>
 <div id="link"></div>
@@ -50,54 +48,40 @@ const uploadBtn = document.getElementById("uploadBtn");
 const preview = document.getElementById("preview");
 const link = document.getElementById("link");
 
-// 仮想ストレージ (ブラウザ内)
-const fakeDB = {};
-
 uploadBtn.onclick = async () => {
   const file = fileInput.files[0];
   if (!file) return alert("ファイルを選択してください");
 
-  const ext = file.name.split('.').pop();
-  const randomName = Math.random().toString(36).substring(2, 10) + '.' + ext;
-
+  // プレビュー表示
   const reader = new FileReader();
   reader.onload = e => {
     preview.innerHTML = '';
     if (file.type.startsWith("video/")) {
-      const video = document.createElement("video");
-      video.src = e.target.result;
-      video.controls = true;
-      video.style.maxWidth = "300px";
-      preview.appendChild(video);
+      const v = document.createElement("video");
+      v.src = e.target.result;
+      v.controls = true;
+      v.style.maxWidth = "300px";
+      preview.appendChild(v);
     } else {
       const img = document.createElement("img");
       img.src = e.target.result;
       preview.appendChild(img);
     }
-    // 仮想保存（Base64データを保持）
-    fakeDB[randomName] = e.target.result;
-    const fakeUrl = `${location.origin}${location.pathname}?file=${randomName}`;
-    link.innerHTML = `<a href="${fakeUrl}" target="_blank">${fakeUrl}</a>`;
   };
   reader.readAsDataURL(file);
-};
 
-// リンクアクセス時にファイル表示
-const params = new URLSearchParams(location.search);
-if (params.has("file")) {
-  const name = params.get("file");
-  if (fakeDB[name]) {
-    document.body.innerHTML = `
-      <div style="text-align:center;margin-top:40px;">
-        <h2>${name}</h2>
-        ${fakeDB[name].startsWith("data:video") 
-          ? `<video src="${fakeDB[name]}" controls style="max-width:90%;"></video>`
-          : `<img src="${fakeDB[name]}" style="max-width:90%;">`}
-      </div>`;
+  // アップロード実行
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch("/api/upload", { method: "POST", body: formData });
+  const data = await res.json();
+
+  if (data.url) {
+    link.innerHTML = `<a href="${data.url}" target="_blank">${data.url}</a>`;
   } else {
-    document.body.innerHTML = `<h2 style="color:red;text-align:center;">このファイルは現在のセッションにありません。</h2>`;
+    alert("アップロードに失敗しました");
   }
-}
+};
 </script>
 </body>
 </html>
