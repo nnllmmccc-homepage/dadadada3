@@ -19,44 +19,85 @@ body {
   margin-top: 15px;
   font-weight: bold;
   color: #0066cc;
+  word-break: break-all;
+}
+input, button {
+  padding: 10px 15px;
+  margin-top: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+button {
+  background: #0078ff;
+  color: white;
+  cursor: pointer;
+}
+button:hover {
+  background: #005bcc;
 }
 </style>
 </head>
 <body>
-<h1>画像アップロード</h1>
-<input type="file" id="fileInput" accept="image/*">
+<h1>画像アップロード（仮想ホスト）</h1>
+<input type="file" id="fileInput" accept="image/*,video/mp4,image/gif">
 <button id="uploadBtn">アップロード</button>
 <div id="preview"></div>
 <div id="link"></div>
 
 <script>
-const fileInput = document.getElementById('fileInput');
-const uploadBtn = document.getElementById('uploadBtn');
-const preview = document.getElementById('preview');
-const link = document.getElementById('link');
+const fileInput = document.getElementById("fileInput");
+const uploadBtn = document.getElementById("uploadBtn");
+const preview = document.getElementById("preview");
+const link = document.getElementById("link");
+
+// 仮想ストレージ (ブラウザ内)
+const fakeDB = {};
 
 uploadBtn.onclick = async () => {
   const file = fileInput.files[0];
-  if (!file) return alert("画像を選択してください");
+  if (!file) return alert("ファイルを選択してください");
 
-  // プレビュー表示
+  const ext = file.name.split('.').pop();
+  const randomName = Math.random().toString(36).substring(2, 10) + '.' + ext;
+
   const reader = new FileReader();
   reader.onload = e => {
-    preview.innerHTML = `<img src="${e.target.result}">`;
+    preview.innerHTML = '';
+    if (file.type.startsWith("video/")) {
+      const video = document.createElement("video");
+      video.src = e.target.result;
+      video.controls = true;
+      video.style.maxWidth = "300px";
+      preview.appendChild(video);
+    } else {
+      const img = document.createElement("img");
+      img.src = e.target.result;
+      preview.appendChild(img);
+    }
+    // 仮想保存（Base64データを保持）
+    fakeDB[randomName] = e.target.result;
+    const fakeUrl = `${location.origin}${location.pathname}?file=${randomName}`;
+    link.innerHTML = `<a href="${fakeUrl}" target="_blank">${fakeUrl}</a>`;
   };
   reader.readAsDataURL(file);
-
-  // アップロード
-  const formData = new FormData();
-  formData.append("file", file);
-  const res = await fetch("upload.php", { method: "POST", body: formData });
-  const data = await res.json();
-  if (data.url) {
-    link.innerHTML = `<a href="${data.url}" target="_blank">${data.url}</a>`;
-  } else {
-    alert("アップロードに失敗しました");
-  }
 };
+
+// リンクアクセス時にファイル表示
+const params = new URLSearchParams(location.search);
+if (params.has("file")) {
+  const name = params.get("file");
+  if (fakeDB[name]) {
+    document.body.innerHTML = `
+      <div style="text-align:center;margin-top:40px;">
+        <h2>${name}</h2>
+        ${fakeDB[name].startsWith("data:video") 
+          ? `<video src="${fakeDB[name]}" controls style="max-width:90%;"></video>`
+          : `<img src="${fakeDB[name]}" style="max-width:90%;">`}
+      </div>`;
+  } else {
+    document.body.innerHTML = `<h2 style="color:red;text-align:center;">このファイルは現在のセッションにありません。</h2>`;
+  }
+}
 </script>
 </body>
 </html>
