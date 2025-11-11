@@ -148,7 +148,7 @@
         .image-item {
             border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.极);
             transition: transform 0.3s ease;
             cursor: pointer;
         }
@@ -163,9 +163,63 @@
             object-fit: cover;
         }
         
+        /* 画像表示モード用のスタイル */
+        .view-mode {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            overflow: hidden;
+        }
+        
+        .view-mode img {
+            max-width: 100vw;
+            max-height: 100vh;
+            object-fit: contain;
+        }
+        
+        .view-mode .image-info {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .view-mode .exit-hint {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 6px 12px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            animation: fadeInOut 2s infinite;
+        }
+        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 0.3; }
         }
         
         /* レスポンシブデザイン */
@@ -185,6 +239,16 @@
             .image-grid {
                 grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             }
+        }
+        
+        /* スクロールバーを非表示 */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        
+        body {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
     </style>
 </head>
@@ -321,11 +385,36 @@
             }
         }
 
-        // 画像を表示するページをシミュレート
+        // フルスクリーン画像表示
         function viewImage(id) {
-            // 現在のURLからクエリパラメータを削除
-            const baseUrl = window.location.href.split('?')[0];
-            window.open(`${baseUrl}?view=${id}`, '_blank');
+            getImageById(id).then(image => {
+                if (image) {
+                    // メインコンテンツを非表示
+                    document.querySelector('.container').style.display = 'none';
+                    
+                    // フルスクリーン表示を作成
+                    const viewMode = document.createElement('div');
+                    viewMode.className = 'view-mode';
+                    viewMode.innerHTML = `
+                        <img src="${image.data}" alt="${image.filename}">
+                        <div class="exit-hint">クリックまたはESCキーで閉じる</div>
+                        <div class="image-info">${image.filename}</div>
+                    `;
+                    
+                    document.body.appendChild(viewMode);
+                    
+                    // クリックまたはESCキーで閉じる
+                    const closeView = () => {
+                        viewMode.remove();
+                        document.querySelector('.container').style.display = 'block';
+                    };
+                    
+                    viewMode.addEventListener('click', closeView);
+                    document.addEventListener('keydown', (e) => {
+                        if (e.key === 'Escape') closeView();
+                    });
+                }
+            });
         }
 
         // ページ読み込み時の処理
@@ -340,19 +429,37 @@
                     await initDatabase();
                     const image = await getImageById(viewId);
                     if (image) {
+                        // 完全なフルスクリーン表示
                         document.body.innerHTML = `
-                            <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f0f0f0;">
-                                <img src="${image.data}" alt="${image.filename}" style="max-width: 100%; max-height: 90vh; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.2);">
-                            </div>
-                            <div style="position: fixed; top: 20px; right: 20px;">
-                                <button onclick="window.close()" style="padding: 10px 20px; background: #ff4757; color: white; border: none; border-radius: 5px; cursor: pointer;">閉じる</button>
+                            <div class="view-mode">
+                                <img src="${image.data}" alt="${image.filename}">
+                                <div class="exit-hint">クリックまたはESCキーで閉じる</div>
+                                <div class="image-info">${image.filename}</div>
                             </div>
                         `;
+                        
+                        // クリックまたはESCキーで元のページに戻る
+                        const closeAndReturn = () => {
+                            window.history.back();
+                        };
+                        
+                        document.querySelector('.view-mode').addEventListener('click', closeAndReturn);
+                        document.addEventListener('keydown', (e) => {
+                            if (e.key === 'Escape') closeAndReturn();
+                        });
                     } else {
-                        document.body.innerHTML = '<div style="text-align: center; padding: 50px; color: red;">画像が見つかりません</div>';
+                        document.body.innerHTML = `
+                            <div class="view-mode" style="color: white; display: flex; justify-content: center; align-items: center; font-size: 24px;">
+                                画像が見つかりません
+                            </div>
+                        `;
                     }
                 } catch (error) {
-                    document.body.innerHTML = '<div style="text-align: center; padding: 50px; color: red;">エラーが発生しました</div>';
+                    document.body.innerHTML = `
+                        <div class="view-mode" style="color: white; display: flex; justify-content: center; align-items: center; font-size: 24px;">
+                            エラーが発生しました
+                        </div>
+                    `;
                 }
                 return;
             }
