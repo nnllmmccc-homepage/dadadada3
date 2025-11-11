@@ -45,7 +45,7 @@
         }
         
         h1 {
-            color: #2c极e50;
+            color: #2c3e50;
             text-align: center;
             margin-bottom: 30px;
             font-size: 2.2em;
@@ -66,7 +66,7 @@
         }
         
         .drop-area:hover, .drop-area.dragover {
-            background: #e3f2fd;
+            background: #e3极2fd;
             border-color: #2980b9;
             transform: translateY(-2px);
         }
@@ -89,8 +89,8 @@
         }
         
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(52, 152极 219, 0.4);
+            transform: translate极(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
         }
         
         .result-container {
@@ -108,7 +108,7 @@
             max-height: 300px;
             margin: 15px 0;
             border-radius: 8px;
-            box-shadow: 极 4px 10px rgba(0,0,0,0.极);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
         
         .link-box {
@@ -157,7 +157,7 @@
         .image-item {
             border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 极px rgba(0,0,0,0.2);
             transition: transform 0.3s ease;
             cursor: pointer;
         }
@@ -207,14 +207,14 @@
             backdrop-filter: blur(10px);
         }
         
-        .view-mode .exit-h极nt {
+        .view-mode .exit-hint {
             position: absolute;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
             color: rgba(255, 255, 255, 0.6);
             font-size: 12px;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0极 0, 0.5);
             padding: 6px 12px;
             border-radius: 15px;
             backdrop-filter: blur(10px);
@@ -302,8 +302,7 @@
         const gallery = document.getElementById('gallery');
         const imageGrid = document.getElementById('imageGrid');
 
-        // カスタムドメイン設定（ここを実際のドメインに変更）
-        const CUSTOM_DOMAIN = 'http://yca.surge.sh';
+        // 現在の完全なURLを取得
         const currentFullUrl = window.location.href;
         const currentBaseUrl = currentFullUrl.split('?')[0];
         
@@ -335,7 +334,7 @@
         }
 
         // 画像をデータベースに保存
-        async function saveImageToDB(file, imageData) {
+        async function saveImageToDB(file) {
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction([STORE_NAME], 'readwrite');
                 const store = transaction.objectStore(STORE_NAME);
@@ -344,9 +343,7 @@
                     filename: file.name,
                     type: file.type,
                     size: file.size,
-                    data: imageData,
-                    timestamp: Date.now(),
-                    shortId: generateShortId()
+                    timestamp: Date.now()
                 };
                 
                 const request = store.add(imageRecord);
@@ -356,9 +353,23 @@
             });
         }
 
-        // 短いIDを生成（URL用）
-        function generateShortId() {
-            return Math.random().toString(36).substr(2, 9);
+        // 画像ファイルをBlobとして保存
+        async function saveImageFile(file, imageId) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imageData = e.target.result;
+                    localStorage.setItem(`image_${imageId}`, imageData);
+                    resolve(imageData);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // 画像データを取得
+        function getImageData(imageId) {
+            return localStorage.getItem(`image_${imageId}`);
         }
 
         // 全ての画像を取得
@@ -380,20 +391,17 @@
                 const store = transaction.objectStore(STORE_NAME);
                 const request = store.get(Number(id));
                 
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
-            });
-        }
-
-        // 短いIDで画像を取得
-        async function getImageByShortId(shortId) {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction([STORE_NAME], 'readonly');
-                const store = transaction.objectStore(STORE_NAME);
-                const index = store.index('shortId');
-                const request = index.get(shortId);
-                
-                request.onsuccess = () => resolve(request.result);
+                request.onsuccess = () => {
+                    if (request.result) {
+                        const imageData = getImageData(request.result.id);
+                        resolve({
+                            ...request.result,
+                            data: imageData
+                        });
+                    } else {
+                        resolve(null);
+                    }
+                };
                 request.onerror = () => reject(request.error);
             });
         }
@@ -406,52 +414,50 @@
                 gallery.style.display = 'block';
                 imageGrid.innerHTML = '';
                 
-                images.forEach(image => {
-                    const imgElement = document.createElement('div');
-                    imgElement.className = 'image-item';
-                    imgElement.innerHTML = `
-                        <img src="${image.data}" alt="${image.filename}" 
-                             onclick="viewImage(${image.id})">
-                    `;
-                    imageGrid.appendChild(imgElement);
-                });
+                for (const image of images) {
+                    const imageData = getImageData(image.id);
+                    if (imageData) {
+                        const imgElement = document.createElement('div');
+                        imgElement.className = 'image-item';
+                        imgElement.innerHTML = `
+                            <img src="${imageData}" alt="${image.filename}" 
+                                 onclick="viewImage(${image.id})">
+                        `;
+                        imageGrid.appendChild(imgElement);
+                    }
+                }
             }
         }
 
         // フルスクリーン画像表示
         function viewImage(id) {
             getImageById(id).then(image => {
-                if (image) {
-                    showFullscreenImage(image);
+                if (image && image.data) {
+                    // メインコンテンツを非表示
+                    document.querySelector('.container').style.display = 'none';
+                    
+                    // フルスクリーン表示を作成
+                    const viewMode = document.createElement('div');
+                    viewMode.className = 'view-mode';
+                    viewMode.innerHTML = `
+                        <img src="${image.data}" alt="${image.filename}">
+                        <div class="exit-hint">クリックまたはESCキーで閉じる</div>
+                        <div class="image-info">${image.filename}</div>
+                    `;
+                    
+                    document.body.appendChild(viewMode);
+                    
+                    // クリックまたはESCキーで閉じる
+                    const closeView = () => {
+                        viewMode.remove();
+                        document.querySelector('.container').style.display = 'block';
+                    };
+                    
+                    viewMode.addEventListener('click', closeView);
+                    document.addEventListener('keydown', (e) => {
+                        if (e.key === 'Escape') closeView();
+                    });
                 }
-            });
-        }
-
-        // フルスクリーン表示関数
-        function showFullscreenImage(image) {
-            // メインコンテンツを非表示
-            document.querySelector('.container').style.display = 'none';
-            
-            // フルスクリーン表示を作成
-            const viewMode = document.createElement('div');
-            viewMode.className = 'view-mode';
-            viewMode.innerHTML = `
-                <img src="${image.data}" alt="${image.filename}">
-                <div class="exit-hint">クリックまたはESCキーで閉じる</div>
-                <div class="image-info">${image.filename}</div>
-            `;
-            
-            document.body.appendChild(viewMode);
-            
-            // クリックまたはESCキーで閉じる
-            const closeView = () => {
-                viewMode.remove();
-                document.querySelector('.container').style.display = 'block';
-            };
-            
-            viewMode.addEventListener('click', closeView);
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') closeView();
             });
         }
 
@@ -461,7 +467,7 @@
             document.querySelector('meta[property="og:title"]').setAttribute('content', filename);
             document.querySelector('meta[property="og:description"]').setAttribute('content', '共有された画像');
             document.querySelector('meta[property="og:image"]').setAttribute('content', imageUrl);
-            document.querySelector('meta[property="og:url"]').setAttribute('content', window.location.href);
+            document.querySelector('meta[property="og:url"]').极Attribute('content', window.location.href);
             
             // Twitter Card meta tags
             document.querySelector('meta[name="twitter:title"]').setAttribute('content', filename);
@@ -475,28 +481,20 @@
         // URLパラメータから画像IDを取得
         function getImageIdFromUrl() {
             const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('id');
+            return urlParams.get('view');
         }
 
         // ページ読み込み時の処理
         window.addEventListener('load', async function() {
             // URLパラメータをチェック
-            const imageId = getImageIdFromUrl();
+            const viewId = getImageIdFromUrl();
             
-            if (imageId) {
+            if (viewId) {
                 // 画像表示モード
                 try {
                     await initDatabase();
-                    let image;
-                    
-                    // 数値IDか短いIDかを判定
-                    if (!isNaN(imageId)) {
-                        image = await getImageById(Number(imageId));
-                    } else {
-                        image = await getImageByShortId(imageId);
-                    }
-                    
-                    if (image) {
+                    const image = await getImageById(viewId);
+                    if (image && image.data) {
                         // メタタグを更新（Discordなどでリンクプレビュー用）
                         updateMetaTags(image.data, image.filename);
                         
@@ -602,21 +600,20 @@
                 
                 try {
                     // 画像をデータベースに保存
-                    const imageId = await saveImageToDB(file, imageData);
-                    const image = await getImageById(imageId);
+                    const imageId = await saveImageToDB(file);
+                    // 画像ファイルを保存
+                    await saveImageFile(file, imageId);
                     
-                    if (image) {
-                        // 共有リンクを生成（カスタムドメイン + 短いID）
-                        const shareLink = `${CUSTOM_DOMAIN}?id=${image.shortId}`;
-                        linkBox.textContent = shareLink;
-                        
-                        // 結果を表示
-                        resultContainer.style.display = 'block';
-                        statusText.textContent = '';
-                        
-                        // ギャラリーを更新
-                        await updateGallery();
-                    }
+                    // 共有リンクを生成（完全なURL）
+                    const shareLink = `${currentBaseUrl}?view=${imageId}`;
+                    linkBox.textContent = shareLink;
+                    
+                    // 結果を表示
+                    resultContainer.style.display = 'block';
+                    statusText.textContent = '';
+                    
+                    // ギャラリーを更新
+                    await updateGallery();
                     
                 } catch (error) {
                     console.error('保存エラー:', error);
@@ -638,12 +635,6 @@
                 statusText.textContent = 'コピーに失敗しました: ' + err;
             });
         });
-
-        // デバッグ用：データベースをリセット
-        function resetDatabase() {
-            indexedDB.deleteDatabase(DB_NAME);
-            location.reload();
-        }
     </script>
 </body>
 </html>
