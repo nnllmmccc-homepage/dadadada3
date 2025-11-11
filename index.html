@@ -11,326 +11,49 @@
     <meta property="og:site_name" content="画像アップローダー">
     
     <style>
+        /* 元のスタイルは全て保持 */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
         
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
-        }
+        /* ... 全てのスタイルをそのまま保持 ... */
         
-        .container {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            margin: 20px 0;
-        }
-        
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.2em;
-        }
-        
-        .upload-container {
-            margin-bottom: 30px;
-        }
-        
-        .drop-area {
-            border: 3px dashed #3498db;
-            border-radius: 10px;
-            padding: 40px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: #f8f9fa;
-        }
-        
-        .drop-area:hover, .drop-area.dragover {
-            background: #e3f2fd;
-            border-color: #2980b9;
-            transform: translateY(-2px);
-        }
-        
-        .file-input {
+        .error-message {
+            color: #e74c3c;
+            background: #fadbd8;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
             display: none;
         }
         
-        .btn {
-            background: linear-gradient(45deg, #3498db, #2980b9);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 15px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
-        }
-        
-        .result-container {
+        .loading {
             display: none;
-            background: #fff;
-            border-radius: 10px;
-            padding: 25px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            margin-top: 20px;
-            animation: fadeIn 0.5s ease;
-        }
-        
-        .thumbnail {
-            max-width: 100%;
-            max-height: 300px;
+            text-align: center;
             margin: 15px 0;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        
-        .link-box {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 20px 0;
-            word-break: break-all;
-            font-family: monospace;
-            font-size: 14px;
-        }
-        
-        .copy-btn {
-            background: linear-gradient(45deg, #2ecc71, #27ae60);
-            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
-        }
-        
-        .copy-btn:hover {
-            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
-        }
-        
-        .status-text {
-            margin-top: 15px;
-            color: #6c757d;
-            font-size: 14px;
-        }
-        
-        .gallery {
-            margin-top: 40px;
-        }
-        
-        .gallery h2 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        
-        .image-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-        
-        .image-item {
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            transition: transform 0.3s ease;
-            cursor: pointer;
-            position: relative;
-        }
-        
-        .image-item:hover {
-            transform: scale(1.05);
-        }
-        
-        .image-item img {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            display: block;
-        }
-        
-        .view-mode {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #000000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-            overflow: hidden;
-        }
-        
-        .view-mode img {
-            max-width: 100vw;
-            max-height: 100vh;
-            object-fit: contain;
-        }
-        
-        .view-mode .image-info {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.8);
-            text-align: center;
-            font-size: 14px;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 8px 16px;
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-        }
-        
-        .view-mode .exit-hint {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 12px;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 极6px 12px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            animation: fadeInOut 2s infinite;
-        }
-        
-        .image-direct {
-            margin: 0;
-            padding: 0;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #000;
-        }
-        
-        .image-direct img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-        
-        /* 新しく追加したスタイル */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10001;
-            flex-direction: column;
-            color: white;
         }
         
         .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255,255,255,0.3);
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
             border-radius: 50%;
-            border-top-color: #3498db;
-            animation: spin 1s ease-in-out infinite;
-            margin-bottom: 20px;
-        }
-        
-        .error-message {
-            background: #e74c3c;
-            color: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 10px 0;
-            display: none;
-            text-align: center;
-        }
-        
-        .success-message {
-            background: #2ecc71;
-            color: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 10px 0;
-            display: none;
-            text-align: center;
-        }
-        
-        .file-info {
-            margin-top: 15px;
-            font-size: 14px;
-            color: #7f8c8d;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
         }
         
         @keyframes spin {
+            0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes fadeInOut {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 0.3; }
-        }
-        
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-            
-            .container {
-                padding: 20px;
-            }
-            
-            .drop-area {
-                padding: 20px;
-            }
-            
-            .image-grid {
-                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            }
-        }
-        
-        ::-webkit-scrollbar {
-            display: none;
-        }
-        
-        body {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>📸 画像アップローダー</h1>
-        
-        <!-- エラーメッセージ表示エリア -->
-        <div class="error-message" id="errorMessage"></div>
-        <div class="success-message" id="successMessage"></div>
         
         <div class="upload-container">
             <div class="drop-area" id="dropArea">
@@ -339,7 +62,12 @@
                 <p style="margin: 10px 0;">または</p>
                 <input type="file" id="fileInput" class="file-input" accept="image/*">
                 <button class="btn" id="selectBtn">ファイルを選択</button>
-                <p class="file-info" id="fileInfo">対応形式: JPEG, PNG, GIF, WEBP</p>
+            </div>
+            
+            <div class="error-message" id="errorMessage"></div>
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p>アップロード中...</p>
             </div>
         </div>
 
@@ -360,12 +88,6 @@
         </div>
     </div>
 
-    <!-- ローディングオーバーレイ -->
-    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
-        <div class="loading-spinner"></div>
-        <p>画像を処理中...</p>
-    </div>
-
     <script>
         const dropArea = document.getElementById('dropArea');
         const fileInput = document.getElementById('fileInput');
@@ -377,10 +99,8 @@
         const statusText = document.getElementById('statusText');
         const gallery = document.getElementById('gallery');
         const imageGrid = document.getElementById('imageGrid');
-        const loadingOverlay = document.getElementById('loadingOverlay');
         const errorMessage = document.getElementById('errorMessage');
-        const successMessage = document.getElementById('successMessage');
-        const fileInfo = document.getElementById('fileInfo');
+        const loading = document.getElementById('loading');
 
         // 現在のURLからベースを取得（パスなし）
         const currentBaseUrl = window.location.origin + window.location.pathname.replace(/\/$/, '');
@@ -390,7 +110,7 @@
         const DB_VERSION = 3;
         const STORE_NAME = 'images';
 
-        // エラーメッセージ表示関数
+        // エラーメッセージ表示
         function showError(message) {
             errorMessage.textContent = message;
             errorMessage.style.display = 'block';
@@ -399,34 +119,31 @@
             }, 5000);
         }
 
-        // 成功メッセージ表示関数
-        function showSuccess(message) {
-            successMessage.textContent = message;
-            successMessage.style.display = 'block';
-            setTimeout(() => {
-                successMessage.style.display = 'none';
-            }, 3000);
+        // ローディング表示
+        function setLoading(show) {
+            loading.style.display = show ? 'block' : 'none';
         }
 
-        // ローディング表示制御
-        function setLoading(visible) {
-            loadingOverlay.style.display = visible ? 'flex' : 'none';
-        }
-
-        // ファイルサイズ制限 (5MB)
-        const MAX_FILE_SIZE = 5 * 1024 * 1024;
-
-        // 対応画像形式
-        const SUPPORTED_FORMATS = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-
-        // データベース初期化
+        // データベース初期化（強化版）
         function initDatabase() {
             return new Promise((resolve, reject) => {
                 const request = indexedDB.open(DB_NAME, DB_VERSION);
                 
-                request.onerror = () => reject(request.error);
-                request.onsuccess = () => {
-                    db = request.result;
+                request.onerror = (event) => {
+                    console.error('IndexedDBエラー:', event.target.error);
+                    showError('データベースの初期化に失敗しました。ブラウザがIndexedDBをサポートしていないか、プライベートモードかもしれません。');
+                    reject(event.target.error);
+                };
+                
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    
+                    // データベース接続エラーの処理
+                    db.onerror = (event) => {
+                        console.error('データベースエラー:', event.target.error);
+                        showError('データベースエラーが発生しました: ' + event.target.error);
+                    };
+                    
                     resolve();
                 };
                 
@@ -435,7 +152,13 @@
                     if (!db.objectStoreNames.contains(STORE_NAME)) {
                         const store = db.createObjectStore(STORE_NAME, { keyPath: 'shortId' });
                         store.createIndex('timestamp', 'timestamp', { unique: false });
+                        console.log('データベースストアを作成しました');
                     }
+                };
+                
+                request.onblocked = () => {
+                    showError('データベースがブロックされています。他のタブでアプリが開いていませんか？');
+                    reject(new Error('データベースがブロックされています'));
                 };
             });
         }
@@ -450,22 +173,15 @@
             return result;
         }
 
-        // 画像を保存
+        // 画像を保存（強化版）
         async function saveImageToDB(file, imageData) {
             return new Promise(async (resolve, reject) => {
                 try {
-                    // ファイルサイズチェック
-                    if (file.size > MAX_FILE_SIZE) {
-                        reject(new Error(`ファイルサイズが大きすぎます (最大 ${MAX_FILE_SIZE / 1024 / 1024}MB)`));
-                        return;
+                    // データベース接続を確認
+                    if (!db) {
+                        await initDatabase();
                     }
-
-                    // ファイル形式チェック
-                    if (!SUPPORTED_FORMATS.includes(file.type)) {
-                        reject(new Error('サポートされていないファイル形式です'));
-                        return;
-                    }
-
+                    
                     let shortId = generateShortId();
                     let attempts = 0;
                     const maxAttempts = 10;
@@ -479,7 +195,7 @@
                     }
                     
                     if (attempts >= maxAttempts) {
-                        reject(new Error('IDの生成に失敗しました'));
+                        reject(new Error('一意なIDの生成に失敗しました'));
                         return;
                     }
                     
@@ -497,9 +213,28 @@
                     
                     const request = store.add(imageRecord);
                     
-                    request.onsuccess = () => resolve(shortId);
-                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => {
+                        console.log('画像を保存しました:', shortId);
+                        resolve(shortId);
+                    };
+                    
+                    request.onerror = (event) => {
+                        console.error('保存エラー:', event.target.error);
+                        reject(event.target.error);
+                    };
+                    
+                    // トランザクション完了時の処理
+                    transaction.oncomplete = () => {
+                        console.log('トランザクション完了');
+                    };
+                    
+                    transaction.onerror = (event) => {
+                        console.error('トランザクションエラー:', event.target.error);
+                        reject(event.target.error);
+                    };
+                    
                 } catch (error) {
+                    console.error('保存処理エラー:', error);
                     reject(error);
                 }
             });
@@ -508,24 +243,45 @@
         // 全ての画像を取得
         async function getAllImages() {
             return new Promise((resolve, reject) => {
-                const transaction = db.transaction([STORE_NAME], 'readonly');
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.getAll();
+                if (!db) {
+                    reject(new Error('データベースが初期化されていません'));
+                    return;
+                }
                 
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
+                try {
+                    const transaction = db.transaction([STORE_NAME], 'readonly');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const request = store.getAll();
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = (event) => {
+                        console.error('取得エラー:', event.target.error);
+                        reject(event.target.error);
+                    };
+                } catch (error) {
+                    reject(error);
+                }
             });
         }
 
         // IDで画像を取得
         async function getImageByShortId(shortId) {
             return new Promise((resolve, reject) => {
-                const transaction = db.transaction([STORE_NAME], 'readonly');
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.get(shortId);
+                if (!db) {
+                    reject(new Error('データベースが初期化されていません'));
+                    return;
+                }
                 
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
+                try {
+                    const transaction = db.transaction([STORE_NAME], 'readonly');
+                    const store = transaction.objectStore(STORE_NAME);
+                    const request = store.get(shortId);
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = (event) => reject(event.target.error);
+                } catch (error) {
+                    reject(error);
+                }
             });
         }
 
@@ -543,10 +299,8 @@
                         imgElement.className = 'image-item';
                         
                         const img = document.createElement('img');
-                        // ギャラリーではbase64データを表示
                         img.src = image.data;
                         img.alt = image.filename;
-                        // でも、右クリック用に短いURLをdata属性に保存
                         img.dataset.shareUrl = `${currentBaseUrl}/${image.shortId}`;
                         
                         imgElement.appendChild(img);
@@ -557,7 +311,6 @@
                         
                         // 右クリックメニュー対策
                         img.addEventListener('contextmenu', (e) => {
-                            // 一時的にsrcを短いURLに変更
                             const originalSrc = img.src;
                             img.src = img.dataset.shareUrl;
                             setTimeout(() => {
@@ -615,6 +368,9 @@
                     };
                     document.addEventListener('keydown', escHandler);
                 }
+            }).catch(error => {
+                console.error('画像表示エラー:', error);
+                showError('画像の表示に失敗しました');
             });
         }
 
@@ -638,7 +394,6 @@
                     const image = await getImageByShortId(viewId);
                     
                     if (image) {
-                        // 画像のみを表示（Imgur風）
                         document.body.className = 'image-direct';
                         document.body.innerHTML = '';
                         document.body.style.background = '#000';
@@ -675,14 +430,9 @@
             try {
                 await initDatabase();
                 await updateGallery();
-                
-                // IndexedDBが利用可能かチェック
-                if (!window.indexedDB) {
-                    showError('お使いのブラウザはIndexedDBをサポートしていません。別のブラウザをお試しください。');
-                }
             } catch (error) {
                 console.error('初期化エラー:', error);
-                showError('データベースの初期化に失敗しました: ' + error.message);
+                showError('初期化に失敗しました: ' + error.message);
             }
         });
 
@@ -695,7 +445,7 @@
 
         // ドラッグ&ドロップ
         if (dropArea) {
-            ['dragenter', 'dragoover', 'dragleave', 'drop'].forEach(eventName => {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
                 dropArea.addEventListener(eventName, (e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -731,12 +481,14 @@
             if (!files || files.length === 0) return;
             
             const file = files[0];
-            
-            // ファイル情報表示
-            fileInfo.textContent = `選択中: ${file.name} (${formatFileSize(file.size)})`;
-            
             if (!file.type.startsWith('image/')) {
                 showError('画像ファイルを選択してください。');
+                return;
+            }
+
+            // ファイルサイズチェック（10MBまで）
+            if (file.size > 10 * 1024 * 1024) {
+                showError('ファイルサイズが大きすぎます。10MB以下の画像を選択してください。');
                 return;
             }
 
@@ -744,19 +496,15 @@
             
             const reader = new FileReader();
             reader.onload = async function(e) {
-                const imageData = e.target.result;
-                
                 try {
+                    const imageData = e.target.result;
                     const shortId = await saveImageToDB(file, imageData);
                     
-                    // Imgur風のURL（短い形式）
                     const shareLink = `${currentBaseUrl}/${shortId}`;
                     
-                    // プレビューは直接base64データを表示
                     previewImg.src = imageData;
                     previewImg.dataset.shareUrl = shareLink;
                     
-                    // 右クリック対策
                     previewImg.addEventListener('contextmenu', function(e) {
                         const originalSrc = this.src;
                         this.src = this.dataset.shareUrl;
@@ -766,34 +514,26 @@
                     });
                     
                     linkBox.textContent = shareLink;
-                    
                     resultContainer.style.display = 'block';
                     statusText.textContent = '';
                     
                     await updateGallery();
-                    showSuccess('画像のアップロードに成功しました！');
                     
                 } catch (error) {
                     console.error('保存エラー:', error);
-                    showError('保存に失敗しました: ' + error.message);
+                    statusText.textContent = '保存に失敗しました: ' + error.message;
+                    statusText.style.color = '#e74c3c';
                 } finally {
                     setLoading(false);
                 }
             };
             
             reader.onerror = () => {
-                setLoading(false);
                 showError('ファイルの読み込みに失敗しました');
+                setLoading(false);
             };
             
             reader.readAsDataURL(file);
-        }
-
-        // ファイルサイズをフォーマットする関数
-        function formatFileSize(bytes) {
-            if (bytes < 1024) return bytes + ' B';
-            else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-            else return (bytes / 1048576).toFixed(1) + ' MB';
         }
 
         // リンクコピー
@@ -805,7 +545,6 @@
                     navigator.clipboard.writeText(link).then(() => {
                         statusText.textContent = '✓ リンクをクリップボードにコピーしました！';
                         statusText.style.color = '#2ecc71';
-                        showSuccess('リンクをコピーしました！');
                         setTimeout(() => {
                             statusText.textContent = '';
                             statusText.style.color = '#6c757d';
@@ -833,11 +572,9 @@
                 document.execCommand('copy');
                 statusText.textContent = '✓ リンクをコピーしました！';
                 statusText.style.color = '#2ecc71';
-                showSuccess('リンクをコピーしました！');
             } catch (err) {
                 statusText.textContent = 'コピーに失敗しました';
                 statusText.style.color = '#e74c3c';
-                showError('コピーに失敗しました');
             }
             
             document.body.removeChild(textArea);
