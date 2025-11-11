@@ -45,7 +45,7 @@
         }
         
         h1 {
-            color: #2c3e50;
+            color: #2c极e50;
             text-align: center;
             margin-bottom: 30px;
             font-size: 2.2em;
@@ -67,7 +67,7 @@
         
         .drop-area:hover, .drop-area.dragover {
             background: #e3f2fd;
-            border-color: #298极b9;
+            border-color: #2980b9;
             transform: translateY(-2px);
         }
         
@@ -85,12 +85,12 @@
             font-size: 16px;
             margin-top: 15px;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15极 rgba(52, 152, 219, 0.3);
+            box-shadow: 0 4极 15px rgba(52, 152, 219, 0.3);
         }
         
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+            box-shadow: 0 6px 20px rgba(52, 152极 219, 0.4);
         }
         
         .result-container {
@@ -108,7 +108,7 @@
             max-height: 300px;
             margin: 15px 0;
             border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-shadow: 极 4px 10px rgba(0,0,0,0.极);
         }
         
         .link-box {
@@ -128,7 +128,7 @@
         }
         
         .copy-btn:hover {
-            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.极);
+            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
         }
         
         .status-text {
@@ -151,7 +151,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 15px;
-            margin-top: 20极;
+            margin-top: 20px;
         }
         
         .image-item {
@@ -207,14 +207,14 @@
             backdrop-filter: blur(10px);
         }
         
-        .view-mode .exit-hint {
+        .view-mode .exit-h极nt {
             position: absolute;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
             color: rgba(255, 255, 255, 0.6);
             font-size: 12px;
-            background: rgba(0, 0极 0, 0.5);
+            background: rgba(0, 0, 0, 0.5);
             padding: 6px 12px;
             border-radius: 15px;
             backdrop-filter: blur(10px);
@@ -302,14 +302,15 @@
         const gallery = document.getElementById('gallery');
         const imageGrid = document.getElementById('imageGrid');
 
-        // 現在の完全なURLを取得
+        // カスタムドメイン設定（ここを実際のドメインに変更）
+        const CUSTOM_DOMAIN = 'http://yca.surge.sh';
         const currentFullUrl = window.location.href;
         const currentBaseUrl = currentFullUrl.split('?')[0];
         
         // IndexedDBの設定
         let db;
         const DB_NAME = 'ImageUploaderDB';
-        const DB_VERSION = 1;
+        const DB_VERSION = 2; // バージョンアップ
         const STORE_NAME = 'images';
 
         // データベースを初期化
@@ -344,7 +345,8 @@
                     type: file.type,
                     size: file.size,
                     data: imageData,
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
+                    shortId: generateShortId()
                 };
                 
                 const request = store.add(imageRecord);
@@ -352,6 +354,11 @@
                 request.onsuccess = () => resolve(request.result);
                 request.onerror = () => reject(request.error);
             });
+        }
+
+        // 短いIDを生成（URL用）
+        function generateShortId() {
+            return Math.random().toString(36).substr(2, 9);
         }
 
         // 全ての画像を取得
@@ -369,7 +376,7 @@
         // IDで画像を取得
         async function getImageById(id) {
             return new Promise((resolve, reject) => {
-                const transaction = db.transaction([极ORE_NAME], 'readonly');
+                const transaction = db.transaction([STORE_NAME], 'readonly');
                 const store = transaction.objectStore(STORE_NAME);
                 const request = store.get(Number(id));
                 
@@ -378,64 +385,74 @@
             });
         }
 
+        // 短いIDで画像を取得
+        async function getImageByShortId(shortId) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const index = store.index('shortId');
+                const request = index.get(shortId);
+                
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
         // ギャラリーを更新
         async function updateGallery() {
-            try {
-                const images = await getAllImages();
+            const images = await getAllImages();
+            
+            if (images.length > 0) {
+                gallery.style.display = 'block';
+                imageGrid.innerHTML = '';
                 
-                if (images.length > 0) {
-                    gallery.style.display = 'block';
-                    imageGrid.innerHTML = '';
-                    
-                    images.forEach(image => {
-                        const imgElement = document.createElement('div');
-                        imgElement.className = 'image-item';
-                        imgElement.innerHTML = `
-                            <img src="${image.data}" alt="${image.filename}" 
-                                 onclick="viewImage(${image.id})">
-                        `;
-                        imageGrid.appendChild(imgElement);
-                    });
-                }
-            } catch (error) {
-                console.error('ギャラリー更新エラー:', error);
+                images.forEach(image => {
+                    const imgElement = document.createElement('div');
+                    imgElement.className = 'image-item';
+                    imgElement.innerHTML = `
+                        <img src="${image.data}" alt="${image.filename}" 
+                             onclick="viewImage(${image.id})">
+                    `;
+                    imageGrid.appendChild(imgElement);
+                });
             }
         }
 
         // フルスクリーン画像表示
-        async function viewImage(id) {
-            try {
-                const image = await getImageById(id);
+        function viewImage(id) {
+            getImageById(id).then(image => {
                 if (image) {
-                    // メインコンテンツを非表示
-                    document.querySelector('.container').style.display = 'none';
-                    
-                    // フルスクリーン表示を作成
-                    const viewMode = document.createElement('div');
-                    viewMode.className = 'view-mode';
-                    viewMode.innerHTML = `
-                        <img src="${image.data}" alt="${image.filename}">
-                        <div class="exit-hint">クリックまたはESCキーで閉じる</div>
-                        <div class="image-info">${image.filename}</div>
-                    `;
-                    
-                    document.body.appendChild(viewMode);
-                    
-                    // クリックまたはESCキーで閉じる
-                    const closeView = () => {
-                        viewMode.remove();
-                        document.querySelector('.container').style.display = 'block';
-                    };
-                    
-                    viewMode.addEventListener('click', closeView);
-                    document.addEventListener('keydown', (e) => {
-                        if (e.key === 'Escape') closeView();
-                    });
+                    showFullscreenImage(image);
                 }
-            } catch (error) {
-                console.error('画像表示エラー:', error);
-                alert('画像の表示に失敗しました');
-            }
+            });
+        }
+
+        // フルスクリーン表示関数
+        function showFullscreenImage(image) {
+            // メインコンテンツを非表示
+            document.querySelector('.container').style.display = 'none';
+            
+            // フルスクリーン表示を作成
+            const viewMode = document.createElement('div');
+            viewMode.className = 'view-mode';
+            viewMode.innerHTML = `
+                <img src="${image.data}" alt="${image.filename}">
+                <div class="exit-hint">クリックまたはESCキーで閉じる</div>
+                <div class="image-info">${image.filename}</div>
+            `;
+            
+            document.body.appendChild(viewMode);
+            
+            // クリックまたはESCキーで閉じる
+            const closeView = () => {
+                viewMode.remove();
+                document.querySelector('.container').style.display = 'block';
+            };
+            
+            viewMode.addEventListener('click', closeView);
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeView();
+            });
         }
 
         // メタタグを更新する関数
@@ -458,21 +475,29 @@
         // URLパラメータから画像IDを取得
         function getImageIdFromUrl() {
             const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('view');
+            return urlParams.get('id');
         }
 
         // ページ読み込み時の処理
         window.addEventListener('load', async function() {
             // URLパラメータをチェック
-            const viewId = getImageIdFromUrl();
+            const imageId = getImageIdFromUrl();
             
-            if (viewId) {
+            if (imageId) {
                 // 画像表示モード
                 try {
                     await initDatabase();
-                    const image = await getImageById(viewId);
+                    let image;
+                    
+                    // 数値IDか短いIDかを判定
+                    if (!isNaN(imageId)) {
+                        image = await getImageById(Number(imageId));
+                    } else {
+                        image = await getImageByShortId(imageId);
+                    }
+                    
                     if (image) {
-                        // メタタグを更新
+                        // メタタグを更新（Discordなどでリンクプレビュー用）
                         updateMetaTags(image.data, image.filename);
                         
                         // 完全なフルスクリーン表示
@@ -569,12 +594,6 @@
                 return;
             }
 
-            // ファイルサイズチェック（10MBまで）
-            if (file.size > 10 * 1024 * 1024) {
-                alert('ファイルサイズが大きすぎます。10MB以下の画像を選択してください。');
-                return;
-            }
-
             // 画像をData URLとして読み込み
             const reader = new FileReader();
             reader.onload = async function(e) {
@@ -584,28 +603,26 @@
                 try {
                     // 画像をデータベースに保存
                     const imageId = await saveImageToDB(file, imageData);
+                    const image = await getImageById(imageId);
                     
-                    // 共有リンクを生成（完全なURL）
-                    const shareLink = `${currentBaseUrl}?view=${imageId}`;
-                    linkBox.textContent = shareLink;
-                    
-                    // 結果を表示
-                    resultContainer.style.display = 'block';
-                    statusText.textContent = '';
-                    
-                    // ギャラリーを更新
-                    await updateGallery();
+                    if (image) {
+                        // 共有リンクを生成（カスタムドメイン + 短いID）
+                        const shareLink = `${CUSTOM_DOMAIN}?id=${image.shortId}`;
+                        linkBox.textContent = shareLink;
+                        
+                        // 結果を表示
+                        resultContainer.style.display = 'block';
+                        statusText.textContent = '';
+                        
+                        // ギャラリーを更新
+                        await updateGallery();
+                    }
                     
                 } catch (error) {
                     console.error('保存エラー:', error);
                     statusText.textContent = '保存に失敗しました: ' + error.message;
                 }
             };
-            
-            reader.onerror = function() {
-                alert('ファイルの読み込みに失敗しました。別の画像を試してください。');
-            };
-            
             reader.readAsDataURL(file);
         }
 
@@ -618,23 +635,15 @@
                     statusText.textContent = '';
                 }, 3000);
             }).catch(err => {
-                // フォールバック: 古いブラウザ用
-                const textArea = document.createElement('textarea');
-                textArea.value = link;
-                document.body.appendChild(textArea);
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    statusText.textContent = 'リンクをコピーしました！';
-                } catch (e) {
-                    statusText.textContent = 'コピーに失敗しました';
-                }
-                document.body.removeChild(textArea);
+                statusText.textContent = 'コピーに失敗しました: ' + err;
             });
         });
 
-        // グローバル関数として公開
-        window.viewImage = viewImage;
+        // デバッグ用：データベースをリセット
+        function resetDatabase() {
+            indexedDB.deleteDatabase(DB_NAME);
+            location.reload();
+        }
     </script>
 </body>
 </html>
