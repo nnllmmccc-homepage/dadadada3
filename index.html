@@ -4,6 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>画像アップローダー - 完全版</title>
+    
+    <!-- Open Graph meta tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="画像アップローダー">
+    <meta property="og:description" content="画像をアップロードして共有しましょう">
+    <meta property="og:url" content="https://your-domain.com/">
+    <meta property="og:image" content="https://your-domain.com/default-image.jpg">
+    <meta property="og:site_name" content="画像アップローダー">
+    
+    <!-- Twitter Card meta tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="画像アップローダー">
+    <meta name="twitter:description" content="画像をアップロードして共有しましょう">
+    <meta name="twitter:image" content="https://your-domain.com/default-image.jpg">
+    
     <style>
         * {
             box-sizing: border-box;
@@ -54,12 +69,6 @@
             background: #e3f2fd;
             border-color: #2980b9;
             transform: translateY(-2px);
-        }
-        
-        .drop-area i {
-            font-size: 48px;
-            color: #3498db;
-            margin-bottom: 15px;
         }
         
         .file-input {
@@ -148,7 +157,7 @@
         .image-item {
             border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.极);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             transition: transform 0.3s ease;
             cursor: pointer;
         }
@@ -293,6 +302,9 @@
         const gallery = document.getElementById('gallery');
         const imageGrid = document.getElementById('imageGrid');
 
+        // 現在のドメインを取得
+        const currentDomain = window.location.origin;
+        
         // IndexedDBの設定
         let db;
         const DB_NAME = 'ImageUploaderDB';
@@ -417,6 +429,23 @@
             });
         }
 
+        // メタタグを更新する関数
+        function updateMetaTags(imageUrl, filename) {
+            // Open Graph meta tags
+            document.querySelector('meta[property="og:title"]').setAttribute('content', filename);
+            document.querySelector('meta[property="og:description"]').setAttribute('content', '共有された画像');
+            document.querySelector('meta[property="og:image"]').setAttribute('content', imageUrl);
+            document.querySelector('meta[property="og:url"]').setAttribute('content', window.location.href);
+            
+            // Twitter Card meta tags
+            document.querySelector('meta[name="twitter:title"]').setAttribute('content', filename);
+            document.querySelector('meta[name="twitter:description"]').setAttribute('content', '共有された画像');
+            document.querySelector('meta[name="twitter:image"]').setAttribute('content', imageUrl);
+            
+            // ページタイトルも更新
+            document.title = filename + ' - 画像アップローダー';
+        }
+
         // ページ読み込み時の処理
         window.addEventListener('load', async function() {
             // URLパラメータをチェック
@@ -429,6 +458,9 @@
                     await initDatabase();
                     const image = await getImageById(viewId);
                     if (image) {
+                        // メタタグを更新（Discordなどでリンクプレビュー用）
+                        updateMetaTags(image.data, image.filename);
+                        
                         // 完全なフルスクリーン表示
                         document.body.innerHTML = `
                             <div class="view-mode">
@@ -440,7 +472,8 @@
                         
                         // クリックまたはESCキーで元のページに戻る
                         const closeAndReturn = () => {
-                            window.history.back();
+                            const baseUrl = window.location.href.split('?')[0];
+                            window.location.href = baseUrl;
                         };
                         
                         document.querySelector('.view-mode').addEventListener('click', closeAndReturn);
@@ -468,6 +501,13 @@
             try {
                 await initDatabase();
                 await updateGallery();
+                
+                // デフォルトのメタタグを設定
+                updateMetaTags(
+                    currentDomain + '/default-image.jpg', 
+                    '画像アップローダー'
+                );
+                
             } catch (error) {
                 console.error('データベース初期化エラー:', error);
             }
