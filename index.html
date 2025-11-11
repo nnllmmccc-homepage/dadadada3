@@ -16,7 +16,7 @@
     <!-- Twitter Card meta tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="画像アップローダー">
-    <meta name="twitter:description" content="画像をアップロードして共享しましょう">
+    <meta name="twitter:description" content="画像をアップロードして共有しましょう">
     <meta name="twitter:image" content="">
     
     <style>
@@ -40,7 +40,7 @@
             background: white;
             border-radius: 15px;
             padding: 30px;
-            box-shadow: 0 10px 极0px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             margin: 20px 0;
         }
         
@@ -63,27 +63,12 @@
             cursor: pointer;
             transition: all 0.3s ease;
             background: #f8f9fa;
-            position: relative;
         }
         
         .drop-area:hover, .drop-area.dragover {
             background: #e3f2fd;
-            border-color: #2980b9;
+            border-color: #298极b9;
             transform: translateY(-2px);
-        }
-        
-        .drop-area.dragover::after {
-            content: 'ここに画像をドロップ';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(52, 152, 219, 0.9);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            font-weight: bold;
-            z-index: 10;
         }
         
         .file-input {
@@ -100,7 +85,7 @@
             font-size: 16px;
             margin-top: 15px;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            box-shadow: 0 4px 15极 rgba(52, 152, 219, 0.3);
         }
         
         .btn:hover {
@@ -123,8 +108,7 @@
             max-height: 300px;
             margin: 15px 0;
             border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0极0,0.1);
-            display: block;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
         
         .link-box {
@@ -136,23 +120,21 @@
             word-break: break-all;
             font-family: monospace;
             font-size: 14px;
-            line-height: 1.4;
         }
         
         .copy-btn {
             background: linear-gradient(45deg, #2ecc71, #27ae60);
-            box-shadow: 0 4极 15px rgba(46, 204, 113, 0.3);
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
         }
         
         .copy-btn:hover {
-            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.极);
         }
         
         .status-text {
             margin-top: 15px;
             color: #6c757d;
             font-size: 14px;
-            min-height: 20px;
         }
         
         .gallery {
@@ -163,13 +145,13 @@
             color: #2c3e50;
             margin-bottom: 20px;
             text-align: center;
-        }
+极        }
         
         .image-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 15px;
-            margin-top: 20px;
+            margin-top: 20极;
         }
         
         .image-item {
@@ -188,7 +170,6 @@
             width: 100%;
             height: 120px;
             object-fit: cover;
-            display: block;
         }
         
         /* 画像表示モード用のスタイル */
@@ -210,7 +191,6 @@
             max-width: 100vw;
             max-height: 100vh;
             object-fit: contain;
-            display: block;
         }
         
         .view-mode .image-info {
@@ -227,33 +207,18 @@
             backdrop-filter: blur(10px);
         }
         
-        .view-mode .exit-h极nt {
+        .view-mode .exit-hint {
             position: absolute;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
             color: rgba(255, 255, 255, 0.6);
             font-size: 12px;
-            background: rgba(0, 0, 0, 极.5);
+            background: rgba(0, 0极 0, 0.5);
             padding: 6px 12px;
             border-radius: 15px;
             backdrop-filter: blur(10px);
             animation: fadeInOut 2s infinite;
-        }
-        
-        .loading {
-            display: none;
-            text-align: center;
-            margin: 20px 0;
-            color: #3498db;
-            font-weight: bold;
-        }
-        
-        .error-message {
-            color: #e74c3c;
-            margin-top: 10px;
-            font-size: 14px;
-            display: none;
         }
         
         @keyframes fadeIn {
@@ -302,14 +267,12 @@
         
         <div class="upload-container">
             <div class="drop-area" id="dropArea">
-                <div style="font-size: 48px; margin-bottom: 15px;">📁</div>
+                <div>📁</div>
                 <p>ここに画像をドラッグ＆ドロップ</p>
                 <p>または</p>
-                <input type="file" id="fileInput" class="file-input" accept="image/*" multiple>
+                <input type="file" id="fileInput" class="file-input" accept="image/*">
                 <button class="btn" onclick="document.getElementById('fileInput').click()">ファイルを選択</button>
             </div>
-            <div class="error-message" id="errorMessage"></div>
-            <div class="loading" id="loading">アップロード中...</div>
         </div>
 
         <div class="result-container" id="resultContainer">
@@ -338,8 +301,6 @@
         const statusText = document.getElementById('statusText');
         const gallery = document.getElementById('gallery');
         const imageGrid = document.getElementById('imageGrid');
-        const errorMessage = document.getElementById('errorMessage');
-        const loading = document.getElementById('loading');
 
         // 現在の完全なURLを取得
         const currentFullUrl = window.location.href;
@@ -397,7 +358,7 @@
         async function getAllImages() {
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction([STORE_NAME], 'readonly');
-               极 store = transaction.objectStore(STORE_NAME);
+                const store = transaction.objectStore(STORE_NAME);
                 const request = store.getAll();
                 
                 request.onsuccess = () => resolve(request.result);
@@ -408,7 +369,7 @@
         // IDで画像を取得
         async function getImageById(id) {
             return new Promise((resolve, reject) => {
-                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const transaction = db.transaction([极ORE_NAME], 'readonly');
                 const store = transaction.objectStore(STORE_NAME);
                 const request = store.get(Number(id));
                 
@@ -419,27 +380,32 @@
 
         // ギャラリーを更新
         async function updateGallery() {
-            const images = await getAllImages();
-            
-            if (images.length > 0) {
-                gallery.style.display = 'block';
-                imageGrid.innerHTML = '';
+            try {
+                const images = await getAllImages();
                 
-                images.forEach(image => {
-                    const imgElement = document.createElement('div');
-                    imgElement.className = 'image-item';
-                    imgElement.innerHTML = `
-                        <img src="${image.data}" alt="${image.filename}" 
-                             onclick="viewImage(${image.id})">
-                    `;
-                    imageGrid.appendChild(imgElement);
-                });
+                if (images.length > 0) {
+                    gallery.style.display = 'block';
+                    imageGrid.innerHTML = '';
+                    
+                    images.forEach(image => {
+                        const imgElement = document.createElement('div');
+                        imgElement.className = 'image-item';
+                        imgElement.innerHTML = `
+                            <img src="${image.data}" alt="${image.filename}" 
+                                 onclick="viewImage(${image.id})">
+                        `;
+                        imageGrid.appendChild(imgElement);
+                    });
+                }
+            } catch (error) {
+                console.error('ギャラリー更新エラー:', error);
             }
         }
 
         // フルスクリーン画像表示
-        function viewImage(id) {
-            getImageById(id).then(image => {
+        async function viewImage(id) {
+            try {
+                const image = await getImageById(id);
                 if (image) {
                     // メインコンテンツを非表示
                     document.querySelector('.container').style.display = 'none';
@@ -466,7 +432,10 @@
                         if (e.key === 'Escape') closeView();
                     });
                 }
-            });
+            } catch (error) {
+                console.error('画像表示エラー:', error);
+                alert('画像の表示に失敗しました');
+            }
         }
 
         // メタタグを更新する関数
@@ -475,7 +444,7 @@
             document.querySelector('meta[property="og:title"]').setAttribute('content', filename);
             document.querySelector('meta[property="og:description"]').setAttribute('content', '共有された画像');
             document.querySelector('meta[property="og:image"]').setAttribute('content', imageUrl);
-            document.querySelector('meta[property极="og:url"]').setAttribute('content', window.location.href);
+            document.querySelector('meta[property="og:url"]').setAttribute('content', window.location.href);
             
             // Twitter Card meta tags
             document.querySelector('meta[name="twitter:title"]').setAttribute('content', filename);
@@ -490,66 +459,6 @@
         function getImageIdFromUrl() {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get('view');
-        }
-
-        // ファイル処理のメイン関数
-        async function handleFiles(files) {
-            if (files.length === 0) return;
-            
-            const file = files[0];
-            if (!file.type.startsWith('image/')) {
-                showError('画像ファイルを選択してください。');
-                return;
-            }
-
-            // ローディング表示
-            loading.style.display = 'block';
-            errorMessage.style.display = 'none';
-
-            // 画像をData URLとして読み込み
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                try {
-                    const imageData = e.target.result;
-                    previewImg.src = imageData;
-                    
-                    // 画像をデータベースに保存
-                    const imageId = await saveImageToDB(file, imageData);
-                    
-                    // 共有リンクを生成（完全なURL）
-                    const shareLink = `${currentBaseUrl}?view=${imageId}`;
-                    linkBox.textContent = shareLink;
-                    
-                    // 結果を表示
-                    resultContainer.style.display = 'block';
-                    statusText.textContent = '';
-                    
-                    // ギャラリーを更新
-                    await updateGallery();
-                    
-                } catch (error) {
-                    console.error('保存エラー:', error);
-                    showError('保存に失敗しました: ' + error.message);
-                } finally {
-                    loading.style.display = 'none';
-                }
-            };
-            
-            reader.onerror = function() {
-                showError('ファイルの読み込みに失敗しました');
-                loading.style.display = 'none';
-            };
-            
-            reader.readAsDataURL(file);
-        }
-
-        // エラーメッセージ表示
-        function showError(message) {
-            errorMessage.textContent = message;
-            errorMessage.style.display = 'block';
-            setTimeout(() => {
-                errorMessage.style.display = 'none';
-            }, 5000);
         }
 
         // ページ読み込み時の処理
@@ -608,14 +517,12 @@
                 
             } catch (error) {
                 console.error('データベース初期化エラー:', error);
-                showError('データベースの初期化に失敗しました');
             }
         });
 
-        // ドラッグ＆ドロップのイベント処理 - 完全修正版
+        // ドラッグ＆ドロップのイベント処理
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropArea.addEventListener(eventName, preventDefaults, false);
-            document.addEventListener(eventName, preventDefaults, false);
         });
 
         function preventDefaults(e) {
@@ -639,39 +546,95 @@
             dropArea.classList.remove('dragover');
         }
 
-        // ドロップイベント
-        dropArea.addEventListener('drop', function(e) {
+        dropArea.addEventListener('drop', handleDrop, false);
+        fileInput.addEventListener('change', handleFileSelect, false);
+
+        function handleDrop(e) {
             const dt = e.dataTransfer;
             const files = dt.files;
             handleFiles(files);
-        }, false);
+        }
 
-        // ファイル選択イベント
-        fileInput.addEventListener('change', function(e) {
+        function handleFileSelect(e) {
             const files = e.target.files;
             handleFiles(files);
-            // 入力値をリセットして同じファイルを再度選択できるように
-            fileInput.value = '';
-        }, false);
+        }
+
+        async function handleFiles(files) {
+            if (files.length === 0) return;
+            
+            const file = files[0];
+            if (!file.type.startsWith('image/')) {
+                alert('画像ファイルを選択してください。');
+                return;
+            }
+
+            // ファイルサイズチェック（10MBまで）
+            if (file.size > 10 * 1024 * 1024) {
+                alert('ファイルサイズが大きすぎます。10MB以下の画像を選択してください。');
+                return;
+            }
+
+            // 画像をData URLとして読み込み
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const imageData = e.target.result;
+                previewImg.src = imageData;
+                
+                try {
+                    // 画像をデータベースに保存
+                    const imageId = await saveImageToDB(file, imageData);
+                    
+                    // 共有リンクを生成（完全なURL）
+                    const shareLink = `${currentBaseUrl}?view=${imageId}`;
+                    linkBox.textContent = shareLink;
+                    
+                    // 結果を表示
+                    resultContainer.style.display = 'block';
+                    statusText.textContent = '';
+                    
+                    // ギャラリーを更新
+                    await updateGallery();
+                    
+                } catch (error) {
+                    console.error('保存エラー:', error);
+                    statusText.textContent = '保存に失敗しました: ' + error.message;
+                }
+            };
+            
+            reader.onerror = function() {
+                alert('ファイルの読み込みに失敗しました。別の画像を試してください。');
+            };
+            
+            reader.readAsDataURL(file);
+        }
 
         // リンクコピーボタンの処理
         copyBtn.addEventListener('click', function() {
             const link = linkBox.textContent;
             navigator.clipboard.writeText(link).then(() => {
                 statusText.textContent = 'リンクをクリップボードにコピーしました！';
-                statusText.style.color = '#27ae60';
                 setTimeout(() => {
                     statusText.textContent = '';
                 }, 3000);
             }).catch(err => {
-                statusText.textContent = 'コピーに失敗しました: ' + err;
-                statusText.style.color = '#e74c3c';
+                // フォールバック: 古いブラウザ用
+                const textArea = document.createElement('textarea');
+                textArea.value = link;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    statusText.textContent = 'リンクをコピーしました！';
+                } catch (e) {
+                    statusText.textContent = 'コピーに失敗しました';
+                }
+                document.body.removeChild(textArea);
             });
         });
 
-        // デバッグ用: コンソールに状態を表示
-        console.log('アプリケーションが正常に初期化されました');
-        console.log('現在のベースURL:', currentBaseUrl);
+        // グローバル関数として公開
+        window.viewImage = viewImage;
     </script>
 </body>
 </html>
