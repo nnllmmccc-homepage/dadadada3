@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>画像アップローダー - 完全版</title>
     
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="画像アップローダー">
+    <meta property="og:description" content="画像をアップロードして共有しましょう">
+    <meta property="og:url" content="">
+    <meta property="og:image" content="">
+    <meta property="og:site_name" content="画像アップローダー">
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="画像アップローダー">
+    <meta name="twitter:description" content="画像をアップロードして共有しましょう">
+    <meta name="twitter:image" content="">
+    
     <style>
         * {
             box-sizing: border-box;
@@ -62,7 +74,7 @@
         }
         
         .btn {
-            background: linear-gradient(45deg, #3498db, #298极b9);
+            background: linear-gradient(45deg, #3498db, #2980b9);
             color: white;
             border: none;
             padding: 12px 25px;
@@ -84,7 +96,7 @@
             background: #fff;
             border-radius: 10px;
             padding: 25px;
-            box-shadow: 0 5极 15px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             margin-top: 20px;
             animation: fadeIn 0.5s ease;
         }
@@ -158,7 +170,6 @@
             object-fit: cover;
         }
         
-        /* 画像表示モード用のスタイル */
         .view-mode {
             position: fixed;
             top: 0;
@@ -200,9 +211,9 @@
             transform: translateX(-50%);
             color: rgba(255, 255, 255, 0.6);
             font-size: 12px;
-            background: rgba(0, 0, 极, 0.5);
+            background: rgba(0, 0, 0, 0.5);
             padding: 6px 12px;
-            border-radius极 15px;
+            border-radius: 15px;
             backdrop-filter: blur(10px);
             animation: fadeInOut 2s infinite;
         }
@@ -217,7 +228,6 @@
             50% { opacity: 0.3; }
         }
         
-        /* レスポンシブデザイン */
         @media (max-width: 768px) {
             body {
                 padding: 10px;
@@ -236,7 +246,6 @@
             }
         }
         
-        /* スクロールバーを非表示 */
         ::-webkit-scrollbar {
             display: none;
         }
@@ -277,7 +286,6 @@
     </div>
 
     <script>
-        // 必要な変数を定義
         const dropArea = document.getElementById('dropArea');
         const fileInput = document.getElementById('fileInput');
         const resultContainer = document.getElementById('resultContainer');
@@ -288,234 +296,33 @@
         const gallery = document.getElementById('gallery');
         const imageGrid = document.getElementById('imageGrid');
 
-        // 現在のベースURLを取得
-        const currentBaseUrl = window.location.href.split('?')[0];
+        const currentFullUrl = window.location.href;
+        const currentBaseUrl = currentFullUrl.split('?')[0];
         
-        // 画像ストレージのキー
-        const IMAGE_STORAGE_KEY = 'uploaded_images';
+        let db;
+        const DB_NAME = 'ImageUploaderDB';
+        const DB_VERSION = 2;
+        const STORE_NAME = 'images';
         
-        // 画像データを保存
-        function saveImageData(imageId, imageData) {
-            let images = JSON.parse(localStorage.getItem(IMAGE_STORAGE_KEY) || '{}');
-            images[imageId] = imageData;
-            localStorage.setItem(IMAGE_STORAGE_KEY, JSON.stringify(images));
-            return imageId;
-        }
-        
-        // 画像データを取得
-        function getImageData(imageId) {
-            const images = JSON.parse(localStorage.getItem(IMAGE_STORAGE_KEY) || '{}');
-            return images[imageId];
-        }
-        
-        // 全ての画像データを取得
-        function getAllImageData() {
-            return JSON.parse(localStorage.getItem(IMAGE_STORAGE_KEY) || '{}');
-        }
-        
-        // ランダムなIDを生成（短いURL用）
-        function generateShortId(length = 8) {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            let result = '';
-            for (let i = 0; i < length; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return result;
-        }
-        
-        // ギャラリーを更新
-        function updateGallery() {
-            const images = getAllImageData();
-            const imageIds = Object.keys(images);
-            
-            if (imageIds.length > 0) {
-                gallery.style.display = 'block';
-                imageGrid.innerHTML = '';
+        // Blob URLを保存するマップ
+        const blobUrls = new Map();
+
+        function initDatabase() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
                 
-                imageIds.forEach(imageId => {
-                    const imageData = images[imageId];
-                    const imgElement = document.createElement('div');
-                    imgElement.className = 'image-item';
-                    imgElement.innerHTML = `
-                        <img src="${imageData.url}" alt="${imageData.filename}" 
-                             onclick="viewImage('${imageId}')">
-                    `;
-                    imageGrid.appendChild(imgElement);
-                });
-            }
-        }
-        
-        // フルスクリーン画像表示
-        function viewImage(imageId) {
-            const imageData = getImageData(imageId);
-            if (imageData) {
-                // メインコンテンツを非表示
-                document.querySelector('.container').style.display = 'none';
-                
-                // フルスクリーン表示を作成
-                const viewMode = document.createElement('div');
-                viewMode.className = 'view-mode';
-                viewMode.innerHTML = `
-                    <img src="${imageData.url}" alt="${imageData.filename}">
-                    <div class="exit-hint">クリックまたはESCキーで閉じる</div>
-                    <div class="image-info">${imageData.filename}</div>
-                `;
-                
-                document.body.appendChild(viewMode);
-                
-                // クリックまたはESCキーで閉じる
-                const closeView = () => {
-                    viewMode.remove();
-                    document.querySelector('.container').style.display = 'block';
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve();
                 };
                 
-                viewMode.addEventListener('click', closeView);
-                document.addEventListener('keydown', (e) => {
-                    if (e.key === 'Escape') closeView();
-                });
-            }
-        }
-        
-        // URLパラメータから画像IDを取得
-        function getImageIdFromUrl() {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('id');
-        }
-        
-        // ページ読み込み時の処理
-        window.addEventListener('load', function() {
-            // URLパラメータをチェック
-            const imageId = getImageIdFromUrl();
-            
-            if (imageId) {
-                // 画像表示モード
-                const imageData = getImageData(imageId);
-                if (imageData) {
-                    // 完全なフルスクリーン表示
-                    document.body.innerHTML = `
-                        <div class="view-mode">
-                            <img src="${imageData.url}" alt="${imageData.filename}">
-                            <div class="exit-hint">クリックまたはESCキーで閉じる</div>
-                            <div class="image-info">${imageData.filename}</div>
-                        </div>
-                    `;
-                    
-                    // クリックまたはESCキーで元のページに戻る
-                    const closeAndReturn = () => {
-                        window.location.href = currentBaseUrl;
-                    };
-                    
-                    document.querySelector('.view-mode').addEventListener('click', closeAndReturn);
-                    document.addEventListener('keydown', (e) => {
-                        if (e.key === 'Escape') closeAndReturn();
-                    });
-                } else {
-                    document.body.innerHTML = `
-                        <div class="view-mode" style="color: white; display: flex; justify-content: center; align-items: center; font-size: 24px;">
-                            画像が見つかりません
-                        </div>
-                    `;
-                }
-                return;
-            }
-            
-            // 通常のアップローダーモード
-            updateGallery();
-        });
-        
-        // ドラッグ＆ドロップのイベント処理
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, preventDefaults, false);
-        });
-        
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-        
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropArea.addEventListener(eventName, highlight, false);
-        });
-        
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, unhighlight, false);
-        });
-        
-        function highlight() {
-            dropArea.classList.add('dragover');
-        }
-        
-        function unhighlight() {
-            dropArea.classList.remove('dragover');
-        }
-        
-        dropArea.addEventListener('drop', handleDrop, false);
-        fileInput.addEventListener('change', handleFileSelect, false);
-        
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            handleFiles(files);
-        }
-        
-        function handleFileSelect(e) {
-            const files = e.target.files;
-            handleFiles(files);
-        }
-        
-        function handleFiles(files) {
-            if (files.length === 0) return;
-            
-            const file = files[0];
-            if (!file.type.startsWith('image/')) {
-                alert('画像ファイルを選択してください。');
-                return;
-            }
-            
-            // FileReaderで画像を読み込み
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const imageId = generateShortId();
-                const imageData = {
-                    filename: file.name,
-                    type: file.type,
-                    size: file.size,
-                    url: e.target.result, // これはData URLですが、実際の使用ではBlob URLに変換します
-                    timestamp: Date.now()
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        const store = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                        store.createIndex('timestamp', 'timestamp', { unique: false });
+                    }
                 };
-                
-                // 画像データを保存
-                saveImageData(imageId, imageData);
-                
-                // プレビュー表示
-                previewImg.src = imageData.url;
-                
-                // 共有リンクを生成（短いURL）
-                const shareLink = `${currentBaseUrl}?id=${imageId}`;
-                linkBox.textContent = shareLink;
-                
-                // 結果を表示
-                resultContainer.style.display = 'block';
-                statusText.textContent = '';
-                
-                // ギャラリーを更新
-                updateGallery();
-            };
-            reader.readAsDataURL(file);
-        }
-        
-        // リンクコピーボタンの処理
-        copyBtn.addEventListener('click', function() {
-            const link = linkBox.textContent;
-            navigator.clipboard.writeText(link).then(() => {
-                statusText.textContent = 'リンクをクリップボードにコピーしました！';
-                setTimeout(() => {
-                    statusText.textContent = '';
-                }, 3000);
-            }).catch(err => {
-                statusText.textContent = 'コピーに失敗しました: ' + err;
             });
-        });
-    </script>
-</body>
-</html>
+        }
