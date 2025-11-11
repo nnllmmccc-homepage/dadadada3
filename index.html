@@ -390,9 +390,14 @@
                 imageGrid.innerHTML = '';
                 
                 images.reverse().forEach(image => {
+                    const shareUrl = `${currentBaseUrl}?id=${image.shortId}`;
                     const imgElement = document.createElement('div');
                     imgElement.className = 'image-item';
-                    imgElement.innerHTML = `<img src="${image.data}" alt="${image.filename}">`;
+                    const img = document.createElement('img');
+                    img.src = shareUrl;
+                    img.alt = image.filename;
+                    img.style.pointerEvents = 'none';
+                    imgElement.appendChild(img);
                     imgElement.addEventListener('click', () => viewImage(image.shortId));
                     imageGrid.appendChild(imgElement);
                 });
@@ -446,22 +451,11 @@
                     await initDatabase();
                     const image = await getImageByShortId(viewId);
                     if (image) {
-                        document.body.innerHTML = `
-                            <div class="view-mode">
-                                <img src="${image.data}" alt="${image.filename}">
-                                <div class="exit-hint">クリックまたはESCキーで閉じる</div>
-                                <div class="image-info">${image.filename}</div>
-                            </div>
-                        `;
-                        
-                        const closeAndReturn = () => {
-                            window.location.href = currentBaseUrl;
-                        };
-                        
-                        document.querySelector('.view-mode').addEventListener('click', closeAndReturn);
-                        document.addEventListener('keydown', (e) => {
-                            if (e.key === 'Escape') closeAndReturn();
-                        });
+                        // 画像データを直接表示
+                        document.body.style.margin = '0';
+                        document.body.style.padding = '0';
+                        document.body.style.overflow = 'hidden';
+                        document.body.innerHTML = `<img src="${image.data}" style="width: 100%; height: 100vh; object-fit: contain; display: block;">`;
                     } else {
                         document.body.innerHTML = `
                             <div class="view-mode" style="color: white; display: flex; justify-content: center; align-items: center; font-size: 24px;">
@@ -537,12 +531,12 @@
             const reader = new FileReader();
             reader.onload = async function(e) {
                 const imageData = e.target.result;
-                previewImg.src = imageData;
                 
                 try {
                     const shortId = await saveImageToDB(file, imageData);
                     
                     const shareLink = `${currentBaseUrl}?id=${shortId}`;
+                    previewImg.src = shareLink;
                     linkBox.textContent = shareLink;
                     
                     resultContainer.style.display = 'block';
