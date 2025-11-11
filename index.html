@@ -3,109 +3,222 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>シンプル画像アップローダー</title>
+    <title>画像アップローダー - 完全版</title>
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f5f5f5;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             color: #333;
         }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin: 20px 0;
+        }
+        
         h1 {
             color: #2c3e50;
             text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.2em;
         }
+        
         .upload-container {
-            background-color: white;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
+        
         .drop-area {
-            border: 2px dashed #3498db;
-            border-radius: 5px;
-            padding: 30px;
+            border: 3px dashed #3498db;
+            border-radius: 10px;
+            padding: 40px;
             text-align: center;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
         }
+        
         .drop-area:hover, .drop-area.dragover {
-            background-color: #ecf0f1;
+            background: #e3f2fd;
+            border-color: #2980b9;
+            transform: translateY(-2px);
         }
+        
+        .drop-area i {
+            font-size: 48px;
+            color: #3498db;
+            margin-bottom: 15px;
+        }
+        
         .file-input {
             display: none;
         }
+        
         .btn {
-            background-color: #3498db;
+            background: linear-gradient(45deg, #3498db, #2980b9);
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
+            padding: 12px 25px;
+            border-radius: 25px;
             cursor: pointer;
             font-size: 16px;
             margin-top: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
         }
+        
         .btn:hover {
-            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
         }
+        
         .result-container {
             display: none;
-            background-color: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: #fff;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             margin-top: 20px;
+            animation: fadeIn 0.5s ease;
         }
+        
         .thumbnail {
             max-width: 100%;
-            max-height: 200px;
-            margin-top: 15px;
-            border-radius: 4px;
-        }
-        .link-box {
-            background-color: #f8f9fa;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 10px;
+            max-height: 300px;
             margin: 15px 0;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        .link-box {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
             word-break: break-all;
+            font-family: monospace;
+            font-size: 14px;
         }
+        
         .copy-btn {
-            background-color: #2ecc71;
+            background: linear-gradient(45deg, #2ecc71, #27ae60);
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
         }
+        
         .copy-btn:hover {
-            background-color: #27ae60;
+            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
         }
+        
         .status-text {
-            margin-top: 10px;
-            color: #7f8c8d;
+            margin-top: 15px;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .gallery {
+            margin-top: 40px;
+        }
+        
+        .gallery h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .image-item {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .image-item:hover {
+            transform: scale(1.05);
+        }
+        
+        .image-item img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* レスポンシブデザイン */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            .drop-area {
+                padding: 20px;
+            }
+            
+            .image-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
         }
     </style>
 </head>
 <body>
-    <h1>画像アップローダー</h1>
-    
-    <div class="upload-container">
-        <div class="drop-area" id="dropArea">
-            <p>ここに画像をドラッグ＆ドロップするか、クリックしてファイルを選択してください</p>
-            <input type="file" id="fileInput" class="file-input" accept="image/*">
-            <button class="btn" onclick="document.getElementById('fileInput').click()">ファイルを選択</button>
+    <div class="container">
+        <h1>📸 画像アップローダー</h1>
+        
+        <div class="upload-container">
+            <div class="drop-area" id="dropArea">
+                <div>📁</div>
+                <p>ここに画像をドラッグ＆ドロップ</p>
+                <p>または</p>
+                <input type="file" id="fileInput" class="file-input" accept="image/*">
+                <button class="btn" onclick="document.getElementById('fileInput').click()">ファイルを選択</button>
+            </div>
+        </div>
+
+        <div class="result-container" id="resultContainer">
+            <h2>✅ アップロード成功！</h2>
+            <img id="previewImg" class="thumbnail" alt="プレビュー">
+            <p>共有リンク:</p>
+            <div class="link-box" id="linkBox"></div>
+            <button class="btn copy-btn" id="copyBtn">リンクをコピー</button>
+            <p class="status-text" id="statusText"></p>
+        </div>
+
+        <div class="gallery" id="gallery" style="display: none;">
+            <h2>📂 アップロード履歴</h2>
+            <div class="image-grid" id="imageGrid"></div>
         </div>
     </div>
 
-    <div class="result-container" id="resultContainer">
-        <h2>アップロード成功！</h2>
-        <img id="previewImg" class="thumbnail" alt="プレビュー">
-        <p>共有リンク:</p>
-        <div class="link-box" id="linkBox"></div>
-        <button class="btn copy-btn" id="copyBtn">リンクをコピー</button>
-        <p class="status-text" id="statusText"></p>
-    </div>
-
     <script>
+        // 必要な変数を定義
         const dropArea = document.getElementById('dropArea');
         const fileInput = document.getElementById('fileInput');
         const resultContainer = document.getElementById('resultContainer');
@@ -113,6 +226,145 @@
         const linkBox = document.getElementById('linkBox');
         const copyBtn = document.getElementById('copyBtn');
         const statusText = document.getElementById('statusText');
+        const gallery = document.getElementById('gallery');
+        const imageGrid = document.getElementById('imageGrid');
+
+        // IndexedDBの設定
+        let db;
+        const DB_NAME = 'ImageUploaderDB';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'images';
+
+        // データベースを初期化
+        function initDatabase() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve();
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        const store = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                        store.createIndex('timestamp', 'timestamp', { unique: false });
+                    }
+                };
+            });
+        }
+
+        // 画像をデータベースに保存
+        async function saveImageToDB(file, imageData) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                
+                const imageRecord = {
+                    filename: file.name,
+                    type: file.type,
+                    size: file.size,
+                    data: imageData,
+                    timestamp: Date.now()
+                };
+                
+                const request = store.add(imageRecord);
+                
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // 全ての画像を取得
+        async function getAllImages() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.getAll();
+                
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // IDで画像を取得
+        async function getImageById(id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.get(Number(id));
+                
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // ギャラリーを更新
+        async function updateGallery() {
+            const images = await getAllImages();
+            
+            if (images.length > 0) {
+                gallery.style.display = 'block';
+                imageGrid.innerHTML = '';
+                
+                images.forEach(image => {
+                    const imgElement = document.createElement('div');
+                    imgElement.className = 'image-item';
+                    imgElement.innerHTML = `
+                        <img src="${image.data}" alt="${image.filename}" 
+                             onclick="viewImage(${image.id})">
+                    `;
+                    imageGrid.appendChild(imgElement);
+                });
+            }
+        }
+
+        // 画像を表示するページをシミュレート
+        function viewImage(id) {
+            // 現在のURLからクエリパラメータを削除
+            const baseUrl = window.location.href.split('?')[0];
+            window.open(`${baseUrl}?view=${id}`, '_blank');
+        }
+
+        // ページ読み込み時の処理
+        window.addEventListener('load', async function() {
+            // URLパラメータをチェック
+            const urlParams = new URLSearchParams(window.location.search);
+            const viewId = urlParams.get('view');
+            
+            if (viewId) {
+                // 画像表示モード
+                try {
+                    await initDatabase();
+                    const image = await getImageById(viewId);
+                    if (image) {
+                        document.body.innerHTML = `
+                            <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f0f0f0;">
+                                <img src="${image.data}" alt="${image.filename}" style="max-width: 100%; max-height: 90vh; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.2);">
+                            </div>
+                            <div style="position: fixed; top: 20px; right: 20px;">
+                                <button onclick="window.close()" style="padding: 10px 20px; background: #ff4757; color: white; border: none; border-radius: 5px; cursor: pointer;">閉じる</button>
+                            </div>
+                        `;
+                    } else {
+                        document.body.innerHTML = '<div style="text-align: center; padding: 50px; color: red;">画像が見つかりません</div>';
+                    }
+                } catch (error) {
+                    document.body.innerHTML = '<div style="text-align: center; padding: 50px; color: red;">エラーが発生しました</div>';
+                }
+                return;
+            }
+            
+            // 通常のアップローダーモード
+            try {
+                await initDatabase();
+                await updateGallery();
+            } catch (error) {
+                console.error('データベース初期化エラー:', error);
+            }
+        });
 
         // ドラッグ＆ドロップのイベント処理
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -154,7 +406,7 @@
             handleFiles(files);
         }
 
-        function handleFiles(files) {
+        async function handleFiles(files) {
             if (files.length === 0) return;
             
             const file = files[0];
@@ -163,17 +415,32 @@
                 return;
             }
 
-            // 画像のプレビュー表示
+            // 画像をData URLとして読み込み
             const reader = new FileReader();
-            reader.onload = function(e) {
-                previewImg.src = e.target.result;
+            reader.onload = async function(e) {
+                const imageData = e.target.result;
+                previewImg.src = imageData;
                 
-                // ダミーのリンク生成（実際のアップロードは行わない）
-                const dummyLink = `https://example.com/images/${Date.now()}_${file.name}`;
-                linkBox.textContent = dummyLink;
-                
-                resultContainer.style.display = 'block';
-                statusText.textContent = '';
+                try {
+                    // 画像をデータベースに保存
+                    const imageId = await saveImageToDB(file, imageData);
+                    
+                    // 共有リンクを生成
+                    const currentUrl = window.location.href.split('?')[0];
+                    const shareLink = `${currentUrl}?view=${imageId}`;
+                    linkBox.textContent = shareLink;
+                    
+                    // 結果を表示
+                    resultContainer.style.display = 'block';
+                    statusText.textContent = '';
+                    
+                    // ギャラリーを更新
+                    await updateGallery();
+                    
+                } catch (error) {
+                    console.error('保存エラー:', error);
+                    statusText.textContent = '保存に失敗しました: ' + error.message;
+                }
             };
             reader.readAsDataURL(file);
         }
