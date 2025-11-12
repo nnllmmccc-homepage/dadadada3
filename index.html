@@ -157,14 +157,41 @@
             font-size: 14px;
         }
         
-        .warning {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
+        .gallery {
+            margin-top: 40px;
+        }
+        
+        .gallery h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .image-item {
             border-radius: 8px;
-            padding: 12px;
-            margin: 15px 0;
-            color: #856404;
-            font-size: 13px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .image-item:hover {
+            transform: scale(1.05);
+        }
+        
+        .image-item img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            display: block;
         }
         
         .view-mode {
@@ -223,6 +250,10 @@
             .drop-area {
                 padding: 20px;
             }
+            
+            .image-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
         }
         
         ::-webkit-scrollbar {
@@ -255,10 +286,6 @@
                 <input type="file" id="fileInput" class="file-input" accept="image/*">
                 <button class="btn" id="selectBtn">ファイルを選択</button>
             </div>
-            
-            <div class="warning">
-                ⚠️ 注意: 画像はURLに埋め込まれます（LocalStorage不使用）。大きな画像は自動で圧縮されます。
-            </div>
         </div>
 
         <div class="result-container" id="resultContainer">
@@ -274,6 +301,11 @@
             
             <p class="status-text" id="statusText"></p>
         </div>
+
+        <div class="gallery" id="gallery" style="display: none;">
+            <h2>📂 アップロード履歴</h2>
+            <div class="image-grid" id="imageGrid"></div>
+        </div>
     </div>
 
     <script>
@@ -284,11 +316,25 @@
         const previewImg = document.getElementById('previewImg');
         const linkBox = document.getElementById('linkBox');
         const statusText = document.getElementById('statusText');
+        const gallery = document.getElementById('gallery');
+        const imageGrid = document.getElementById('imageGrid');
 
         const currentBaseUrl = window.location.origin + window.location.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
         
-        // 画像を圧縮する関数
-        function compressImage(file, maxWidth = 1200, quality = 0.8) {
+        const STORAGE_KEY = 'img_db';
+
+        // ランダムなID生成（7文字）
+        function generateShortId() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+            let result = '';
+            for (let i = 0; i < 7; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        // 画像を圧縮（より小さく）
+        function compressImage(file, maxWidth = 800, quality = 0.7) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 
@@ -300,7 +346,6 @@
                         let width = img.width;
                         let height = img.height;
                         
-                        // リサイズ
                         if (width > maxWidth) {
                             height = (height * maxWidth) / width;
                             width = maxWidth;
@@ -312,7 +357,6 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
                         
-                        // JPEG形式で圧縮
                         const compressedData = canvas.toDataURL('image/jpeg', quality);
                         resolve(compressedData);
                     };
@@ -326,15 +370,131 @@
             });
         }
 
-        // URLから画像データを取得
-        function getImageDataFromUrl() {
-            const hash = window.location.hash.substring(1);
-            if (hash) {
-                try {
-                    return decodeURIComponent(hash);
-                } catch (e) {
-                    return null;
+        // 画像を保存
+        function saveImage(imageData) {
+            try {
+                let db = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                let shortId = generateShortId();
+                let attempts = 0;
+                
+                while (db[shortId] && attempts < 10) {
+                    shortId = generateShortId();
+                    attempts++;
                 }
+                
+                if (attempts >= 10) {
+                    throw new Error('IDの生成に失敗しました');
+                }
+                
+                db[shortId] = {
+                    data: imageData,
+                    timestamp: Date.now()
+                };
+                
+                // 古い画像を削除（最新30個だけ保持）
+                const entries = Object.entries(db);
+                if (entries.length > 30) {
+                    entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
+                    const toRemove = entries.slice(0, entries.length - 30);
+                    toRemove.forEach(([id]) => delete db[id]);
+                }
+                
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+                return shortId;
+            } catch (error) {
+                console.error('保存エラー:', error);
+                throw error;
+            }
+        }
+
+        // 全画像を取得
+        function getAllImages() {
+            try {
+                return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            } catch (error) {
+                return {};
+            }
+        }
+
+        // IDで画像を取得
+        function getImageById(shortId) {
+            const db = getAllImages();
+            return db[shortId] || null;
+        }
+
+        // ギャラリーを更新
+        function updateGallery() {
+            try {
+                const db = getAllImages();
+                const entries = Object.entries(db);
+                
+                if (entries.length > 0) {
+                    gallery.style.display = 'block';
+                    imageGrid.innerHTML = '';
+                    
+                    entries.sort((a, b) => b[1].timestamp - a[1].timestamp).forEach(([id, img]) => {
+                        const imgElement = document.createElement('div');
+                        imgElement.className = 'image-item';
+                        
+                        const imgTag = document.createElement('img');
+                        imgTag.src = img.data;
+                        imgTag.alt = id;
+                        
+                        imgElement.appendChild(imgTag);
+                        imgElement.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            viewImage(id);
+                        });
+                        
+                        imageGrid.appendChild(imgElement);
+                    });
+                }
+            } catch (error) {
+                console.error('ギャラリー更新エラー:', error);
+            }
+        }
+
+        // フルスクリーン表示
+        function viewImage(shortId) {
+            const image = getImageById(shortId);
+            if (image) {
+                const viewMode = document.createElement('div');
+                viewMode.className = 'view-mode';
+                
+                const img = document.createElement('img');
+                img.src = image.data;
+                img.alt = shortId;
+                
+                const exitHint = document.createElement('div');
+                exitHint.className = 'exit-hint';
+                exitHint.textContent = 'クリックまたはESCキーで閉じる';
+                
+                viewMode.appendChild(img);
+                viewMode.appendChild(exitHint);
+                
+                document.body.appendChild(viewMode);
+                
+                const closeView = () => {
+                    viewMode.remove();
+                };
+                
+                viewMode.addEventListener('click', closeView);
+                
+                const escHandler = (e) => {
+                    if (e.key === 'Escape') {
+                        closeView();
+                        document.removeEventListener('keydown', escHandler);
+                    }
+                };
+                document.addEventListener('keydown', escHandler);
+            }
+        }
+
+        // URLから画像IDを取得
+        function getImageIdFromUrl() {
+            const hash = window.location.hash.substring(1);
+            if (hash && hash.length === 7) {
+                return hash;
             }
             return null;
         }
@@ -348,30 +508,44 @@
             
             if (ogImage) ogImage.setAttribute('content', imageData);
             if (twitterImage) twitterImage.setAttribute('content', imageData);
-            if (ogType) ogType.setAttribute('content', 'image');
+            if (ogType) ogType.setAttribute('content', 'website');
             if (ogImageType) ogImageType.setAttribute('content', 'image/jpeg');
         }
 
         // ページ読み込み時の処理
         window.addEventListener('DOMContentLoaded', function() {
-            const imageData = getImageDataFromUrl();
+            const imageId = getImageIdFromUrl();
             
-            if (imageData && imageData.startsWith('data:image')) {
-                // 画像表示モード
-                updateOGPTags(imageData);
+            if (imageId) {
+                const image = getImageById(imageId);
                 
-                document.body.className = 'image-direct';
-                document.body.innerHTML = '';
-                
-                const img = document.createElement('img');
-                img.src = imageData;
-                img.alt = '画像';
-                img.style.maxWidth = '100%';
-                img.style.maxHeight = '100vh';
-                img.style.objectFit = 'contain';
-                
-                document.body.appendChild(img);
+                if (image) {
+                    updateOGPTags(image.data);
+                    
+                    document.body.className = 'image-direct';
+                    document.body.innerHTML = '';
+                    
+                    const img = document.createElement('img');
+                    img.src = image.data;
+                    img.alt = imageId;
+                    img.style.maxWidth = '100%';
+                    img.style.maxHeight = '100vh';
+                    img.style.objectFit = 'contain';
+                    
+                    document.body.appendChild(img);
+                } else {
+                    document.body.innerHTML = `
+                        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; color: white; font-size: 24px; background: #000; flex-direction: column;">
+                            <div>😕</div>
+                            <div style="margin-top: 20px;">画像が見つかりません</div>
+                        </div>
+                    `;
+                }
+                return;
             }
+            
+            // 通常モード
+            updateGallery();
         });
 
         // ファイル選択ボタン
@@ -425,25 +599,22 @@
             resultContainer.style.display = 'block';
 
             try {
-                // 画像を圧縮
                 const compressedData = await compressImage(file);
+                const shortId = saveImage(compressedData);
                 
-                // URLエンコード
-                const encodedData = encodeURIComponent(compressedData);
+                const shareLink = `${currentBaseUrl}#${shortId}`;
                 
-                // リンクを生成
-                const shareLink = `${currentBaseUrl}#${encodedData}`;
-                
-                // プレビュー表示
                 previewImg.src = compressedData;
                 linkBox.textContent = shareLink;
                 
                 statusText.textContent = '✓ アップロード完了！このリンクをDiscordやTwitterに貼り付けると画像が表示されます。';
                 statusText.style.color = '#2ecc71';
                 
+                updateGallery();
+                
             } catch (error) {
                 console.error('処理エラー:', error);
-                statusText.textContent = '❌ 画像の処理に失敗しました';
+                statusText.textContent = '❌ 画像の処理に失敗しました: ' + error.message;
                 statusText.style.color = '#e74c3c';
             }
         }
@@ -454,7 +625,7 @@
             
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(text).then(() => {
-                    statusText.textContent = '✓ リンクをクリップボードにコピーしました！Discordなどに貼り付けてください。';
+                    statusText.textContent = '✓ リンクをクリップボードにコピーしました！';
                     statusText.style.color = '#2ecc71';
                 }).catch(err => {
                     fallbackCopy(text);
