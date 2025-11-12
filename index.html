@@ -241,19 +241,6 @@
             animation: fadeInOut 2s infinite;
         }
         
-        .direct-image-container {
-            position: relative;
-            max-width: 100%;
-            max-height: 100vh;
-        }
-        
-        .direct-image-container img {
-            max-width: 100%;
-            max-height: 100vh;
-            object-fit: contain;
-            display: block;
-        }
-        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -317,9 +304,7 @@
         <div class="result-container" id="resultContainer">
             <h2>✅ アップロード成功！</h2>
             
-            <div class="direct-image-container">
-                <img id="previewImg" class="thumbnail" alt="プレビュー">
-            </div>
+            <img id="previewImg" class="thumbnail" alt="プレビュー">
             
             <div class="link-section">
                 <h3>画像の直リンク（右クリック→画像のアドレスをコピー で取得可能）:</h3>
@@ -354,39 +339,10 @@
         const gallery = document.getElementById('gallery');
         const imageGrid = document.getElementById('imageGrid');
 
-        const currentBaseUrl = window.location.origin + window.location.pathname.replace(/\/$/, '');
+        const currentBaseUrl = window.location.origin + window.location.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
         
-        let db;
-        const DB_NAME = 'ImageUploaderDB';
-        const DB_VERSION = 4;
-        const STORE_NAME = 'images';
-
-        // データベース初期化
-        async function initDatabase() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, DB_VERSION);
-                
-                request.onerror = () => {
-                    console.error('DB初期化エラー:', request.error);
-                    reject(request.error);
-                };
-                
-                request.onsuccess = () => {
-                    db = request.result;
-                    console.log('DB初期化成功');
-                    resolve();
-                };
-                
-                request.onupgradeneeded = (event) => {
-                    const db = event.target.result;
-                    if (!db.objectStoreNames.contains(STORE_NAME)) {
-                        const store = db.createObjectStore(STORE_NAME, { keyPath: 'shortId' });
-                        store.createIndex('timestamp', 'timestamp', { unique: false });
-                        console.log('DBストア作成完了');
-                    }
-                };
-            });
-        }
+        // LocalStorageを使用（GitHub Pages対応）
+        const STORAGE_KEY = 'uploadedImages';
 
         // ランダムなID生成
         function generateShortId() {
@@ -399,32 +355,23 @@
         }
 
         // 画像を保存
-        async function saveImageToDB(file, imageData) {
-            let shortId = generateShortId();
-            let attempts = 0;
-            const maxAttempts = 10;
-            
-            while (attempts < maxAttempts) {
-                try {
-                    const existing = await getImageByShortId(shortId);
-                    if (!existing) break;
-                } catch (e) {
-                    break;
-                }
-                shortId = generateShortId();
-                attempts++;
-            }
-            
-            if (attempts >= maxAttempts) {
-                throw new Error('IDの生成に失敗しました');
-            }
-            
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction([STORE_NAME], 'readwrite');
-                const store = transaction.objectStore(STORE_NAME);
+        function saveImage(file, imageData) {
+            try {
+                let images = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                let shortId = generateShortId();
+                let attempts = 0;
                 
-                const imageRecord = {
-                    shortId: shortId,
+                // IDが重複しないかチェック
+                while (images[shortId] && attempts < 10) {
+                    shortId = generateShortId();
+                    attempts++;
+                }
+                
+                if (attempts >= 10) {
+                    throw new Error('IDの生成に失敗しました');
+                }
+                
+                images[shortId] = {
                     filename: file.name,
                     type: file.type,
                     size: file.size,
@@ -432,59 +379,44 @@
                     timestamp: Date.now()
                 };
                 
-                const request = store.add(imageRecord);
-                
-                request.onsuccess = () => {
-                    console.log('画像保存成功:', shortId);
-                    resolve(shortId);
-                };
-                request.onerror = () => {
-                    console.error('画像保存エラー:', request.error);
-                    reject(request.error);
-                };
-            });
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(images));
+                return shortId;
+            } catch (error) {
+                console.error('保存エラー:', error);
+                throw error;
+            }
         }
 
         // 全ての画像を取得
-        async function getAllImages() {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction([STORE_NAME], 'readonly');
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.getAll();
-                
-                request.onsuccess = () => resolve(request.result || []);
-                request.onerror = () => reject(request.error);
-            });
+        function getAllImages() {
+            try {
+                return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            } catch (error) {
+                console.error('取得エラー:', error);
+                return {};
+            }
         }
 
         // IDで画像を取得
-        async function getImageByShortId(shortId) {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction([STORE_NAME], 'readonly');
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.get(shortId);
-                
-                request.onsuccess = () => {
-                    if (request.result) {
-                        resolve(request.result);
-                    } else {
-                        reject(new Error('画像が見つかりません'));
-                    }
-                };
-                request.onerror = () => reject(request.error);
-            });
+        function getImageById(shortId) {
+            const images = getAllImages();
+            return images[shortId] || null;
         }
 
         // ギャラリーを更新
-        async function updateGallery() {
+        function updateGallery() {
             try {
-                const images = await getAllImages();
+                const images = getAllImages();
+                const imageArray = Object.entries(images).map(([id, data]) => ({
+                    id,
+                    ...data
+                }));
                 
-                if (images.length > 0) {
+                if (imageArray.length > 0) {
                     gallery.style.display = 'block';
                     imageGrid.innerHTML = '';
                     
-                    images.sort((a, b) => b.timestamp - a.timestamp).forEach(image => {
+                    imageArray.sort((a, b) => b.timestamp - a.timestamp).forEach(image => {
                         const imgElement = document.createElement('div');
                         imgElement.className = 'image-item';
                         
@@ -495,7 +427,7 @@
                         imgElement.appendChild(img);
                         imgElement.addEventListener('click', (e) => {
                             e.preventDefault();
-                            viewImage(image.shortId);
+                            viewImage(image.id);
                         });
                         
                         imageGrid.appendChild(imgElement);
@@ -508,102 +440,89 @@
 
         // フルスクリーン表示
         function viewImage(shortId) {
-            getImageByShortId(shortId).then(image => {
-                if (image) {
-                    const viewMode = document.createElement('div');
-                    viewMode.className = 'view-mode';
-                    
-                    const img = document.createElement('img');
-                    img.src = image.data;
-                    img.alt = image.filename;
-                    
-                    const exitHint = document.createElement('div');
-                    exitHint.className = 'exit-hint';
-                    exitHint.textContent = 'クリックまたはESCキーで閉じる';
-                    
-                    const imageInfo = document.createElement('div');
-                    imageInfo.className = 'image-info';
-                    imageInfo.textContent = image.filename;
-                    
-                    viewMode.appendChild(img);
-                    viewMode.appendChild(exitHint);
-                    viewMode.appendChild(imageInfo);
-                    
-                    document.body.appendChild(viewMode);
-                    
-                    const closeView = () => {
-                        viewMode.remove();
-                    };
-                    
-                    viewMode.addEventListener('click', closeView);
-                    
-                    const escHandler = (e) => {
-                        if (e.key === 'Escape') {
-                            closeView();
-                            document.removeEventListener('keydown', escHandler);
-                        }
-                    };
-                    document.addEventListener('keydown', escHandler);
-                }
-            }).catch(err => {
-                console.error('画像表示エラー:', err);
-            });
+            const image = getImageById(shortId);
+            if (image) {
+                const viewMode = document.createElement('div');
+                viewMode.className = 'view-mode';
+                
+                const img = document.createElement('img');
+                img.src = image.data;
+                img.alt = image.filename;
+                
+                const exitHint = document.createElement('div');
+                exitHint.className = 'exit-hint';
+                exitHint.textContent = 'クリックまたはESCキーで閉じる';
+                
+                const imageInfo = document.createElement('div');
+                imageInfo.className = 'image-info';
+                imageInfo.textContent = image.filename;
+                
+                viewMode.appendChild(img);
+                viewMode.appendChild(exitHint);
+                viewMode.appendChild(imageInfo);
+                
+                document.body.appendChild(viewMode);
+                
+                const closeView = () => {
+                    viewMode.remove();
+                };
+                
+                viewMode.addEventListener('click', closeView);
+                
+                const escHandler = (e) => {
+                    if (e.key === 'Escape') {
+                        closeView();
+                        document.removeEventListener('keydown', escHandler);
+                    }
+                };
+                document.addEventListener('keydown', escHandler);
+            }
         }
 
-        // URLパラメータから画像IDを取得
+        // URLから画像IDを取得（ハッシュベース）
         function getImageIdFromUrl() {
-            const path = window.location.pathname;
-            const match = path.match(/\/([A-Za-z0-9]{7})$/);
-            if (match) return match[1];
-            
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('id') || urlParams.get('i');
+            const hash = window.location.hash.substring(1);
+            if (hash && hash.length === 7) {
+                return hash;
+            }
+            return null;
         }
 
         // OGPメタタグを更新
-        function updateOGPTags(imageUrl, filename) {
+        function updateOGPTags(imageData, filename) {
             const ogImage = document.getElementById('og-image');
             const twitterImage = document.getElementById('twitter-image');
             const ogTitle = document.getElementById('og-title');
             const ogType = document.getElementById('og-type');
             
-            if (ogImage) ogImage.setAttribute('content', imageUrl);
-            if (twitterImage) twitterImage.setAttribute('content', imageUrl);
+            if (ogImage) ogImage.setAttribute('content', imageData);
+            if (twitterImage) twitterImage.setAttribute('content', imageData);
             if (ogTitle) ogTitle.setAttribute('content', filename || '画像');
             if (ogType) ogType.setAttribute('content', 'image');
         }
 
         // ページ読み込み時の処理
-        window.addEventListener('DOMContentLoaded', async function() {
-            console.log('ページ読み込み開始');
+        window.addEventListener('DOMContentLoaded', function() {
             const viewId = getImageIdFromUrl();
             
             if (viewId) {
-                console.log('画像ID検出:', viewId);
-                try {
-                    await initDatabase();
-                    const image = await getImageByShortId(viewId);
+                const image = getImageById(viewId);
+                
+                if (image) {
+                    updateOGPTags(image.data, image.filename);
                     
-                    if (image) {
-                        const directLink = `${currentBaseUrl}/${viewId}`;
-                        updateOGPTags(directLink, image.filename);
-                        
-                        document.body.className = 'image-direct';
-                        document.body.innerHTML = '';
-                        
-                        const img = document.createElement('img');
-                        img.src = image.data;
-                        img.alt = image.filename;
-                        img.style.maxWidth = '100%';
-                        img.style.maxHeight = '100vh';
-                        img.style.objectFit = 'contain';
-                        
-                        document.body.appendChild(img);
-                    } else {
-                        throw new Error('画像が見つかりません');
-                    }
-                } catch (error) {
-                    console.error('画像読み込みエラー:', error);
+                    document.body.className = 'image-direct';
+                    document.body.innerHTML = '';
+                    
+                    const img = document.createElement('img');
+                    img.src = image.data;
+                    img.alt = image.filename;
+                    img.style.maxWidth = '100%';
+                    img.style.maxHeight = '100vh';
+                    img.style.objectFit = 'contain';
+                    
+                    document.body.appendChild(img);
+                } else {
                     document.body.innerHTML = `
                         <div style="display: flex; justify-content: center; align-items: center; height: 100vh; color: white; font-size: 24px; background: #000; flex-direction: column;">
                             <div>😕</div>
@@ -615,69 +534,49 @@
             }
             
             // 通常モード
-            try {
-                await initDatabase();
-                await updateGallery();
-                console.log('通常モード初期化完了');
-            } catch (error) {
-                console.error('初期化エラー:', error);
-            }
+            updateGallery();
         });
 
         // ファイル選択ボタン
-        if (selectBtn) {
-            selectBtn.addEventListener('click', (e) => {
-                console.log('ファイル選択ボタンクリック');
-                e.preventDefault();
-                fileInput.click();
-            });
-        }
+        selectBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            fileInput.click();
+        });
 
         // ドラッグ&ドロップ
-        if (dropArea) {
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                dropArea.addEventListener(eventName, (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }, false);
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
             });
+        });
 
-            ['dragenter', 'dragover'].forEach(eventName => {
-                dropArea.addEventListener(eventName, () => {
-                    dropArea.classList.add('dragover');
-                }, false);
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => {
+                dropArea.classList.add('dragover');
             });
+        });
 
-            ['dragleave', 'drop'].forEach(eventName => {
-                dropArea.addEventListener(eventName, () => {
-                    dropArea.classList.remove('dragover');
-                }, false);
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => {
+                dropArea.classList.remove('dragover');
             });
+        });
 
-            dropArea.addEventListener('drop', (e) => {
-                const files = e.dataTransfer.files;
-                console.log('ドロップされたファイル:', files);
-                handleFiles(files);
-            }, false);
-        }
+        dropArea.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
 
-        if (fileInput) {
-            fileInput.addEventListener('change', (e) => {
-                const files = e.target.files;
-                console.log('選択されたファイル:', files);
-                handleFiles(files);
-            }, false);
-        }
+        fileInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            handleFiles(files);
+        });
 
-        async function handleFiles(files) {
-            console.log('handleFiles呼び出し:', files);
-            if (!files || files.length === 0) {
-                console.log('ファイルが選択されていません');
-                return;
-            }
+        function handleFiles(files) {
+            if (!files || files.length === 0) return;
             
             const file = files[0];
-            console.log('処理するファイル:', file.name, file.type, file.size);
             
             if (!file.type.startsWith('image/')) {
                 alert('画像ファイルを選択してください。');
@@ -690,20 +589,16 @@
 
             const reader = new FileReader();
             
-            reader.onload = async function(e) {
-                console.log('ファイル読み込み完了');
+            reader.onload = function(e) {
                 const imageData = e.target.result;
                 
                 try {
-                    const shortId = await saveImageToDB(file, imageData);
-                    console.log('保存完了 ID:', shortId);
+                    const shortId = saveImage(file, imageData);
                     
-                    const directLink = `${currentBaseUrl}/${shortId}`;
-                    const shareLink = `${currentBaseUrl}/${shortId}`;
+                    const directLink = `${currentBaseUrl}#${shortId}`;
+                    const shareLink = `${currentBaseUrl}#${shortId}`;
                     
-                    previewImg.src = directLink;
-                    previewImg.dataset.imageId = shortId;
-                    previewImg.dataset.imageData = imageData;
+                    previewImg.src = imageData;
                     
                     directLinkBox.textContent = directLink;
                     linkBox.textContent = shareLink;
@@ -711,7 +606,7 @@
                     statusText.textContent = '✓ アップロード完了！';
                     statusText.style.color = '#2ecc71';
                     
-                    await updateGallery();
+                    updateGallery();
                     
                     setTimeout(() => {
                         statusText.textContent = '';
@@ -725,7 +620,6 @@
             };
             
             reader.onerror = () => {
-                console.error('ファイル読み込みエラー:', reader.error);
                 statusText.textContent = '❌ ファイルの読み込みに失敗しました';
                 statusText.style.color = '#e74c3c';
             };
@@ -742,8 +636,6 @@
                 text = linkBox.textContent;
             }
             
-            console.log('コピー:', text);
-            
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(text).then(() => {
                     statusText.textContent = '✓ リンクをクリップボードにコピーしました！';
@@ -752,7 +644,6 @@
                         statusText.textContent = '';
                     }, 3000);
                 }).catch(err => {
-                    console.error('コピーエラー:', err);
                     fallbackCopy(text);
                 });
             } else {
