@@ -1,1 +1,147 @@
-a
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Universal HTML Preview</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 18px;
+        }
+        #previewform {
+            padding: 20px;
+            background: #eee;
+            border-radius: 8px;
+            display: none;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+
+<div id="previewform">Loading…</div>
+
+<script>
+(function () {
+
+    var previewForm = document.getElementById('previewform');
+
+    // ⭐ どんなURLでも読み込めるようにする
+    var url = decodeURIComponent(location.search.substring(1));
+
+    // -----------------------------
+    // CORS回避用プロキシ（3段階）
+    // -----------------------------
+    var fetchProxy = function (url, options, i) {
+        var proxy = [
+            "https://cors-anywhere.herokuapp.com/",
+            "https://yacdn.org/proxy/",
+            "https://api.codetabs.com/v1/proxy/?quest="
+        ];
+
+        return fetch(proxy[i] + url, options).then(res => {
+            if (!res.ok) throw new Error("Cannot load " + url);
+            return res.text();
+        }).catch(err => {
+            if (i === proxy.length - 1) throw err;
+            return fetchProxy(url, options, i + 1);
+        });
+    };
+
+    // -----------------------------
+    // HTML 読み込みと <base> 挿入
+    // -----------------------------
+    var loadHTML = function (data) {
+        if (!data) return;
+
+        data = data
+            .replace(/<head([^>]*)>/i,
+                '<head$1><base href="' + url + '">')
+            .replace(
+                /<script(\s*src=["'][^"']*["'])?(\s*type=["'](text|application)\/javascript["'])?/gi,
+                '<script type="text/htmlpreview"$1'
+            );
+
+        setTimeout(() => {
+            document.open();
+            document.write(data);
+            document.close();
+            replaceAssets();
+        }, 10);
+    };
+
+    // -----------------------------
+    // CSSインライン挿入
+    // -----------------------------
+    var loadCSS = function (data) {
+        var style = document.createElement("style");
+        style.innerHTML = data;
+        document.head.appendChild(style);
+    };
+
+    // -----------------------------
+    // JSインライン実行
+    // -----------------------------
+    var loadJS = function (data) {
+        var script = document.createElement("script");
+        script.innerHTML = data;
+        document.body.appendChild(script);
+    };
+
+    // -----------------------------
+    // すべての CSS, JS, iframe をプロキシ化
+    // -----------------------------
+    var replaceAssets = function () {
+
+        // iframe 対応
+        document.querySelectorAll("iframe[src],frame[src]").forEach(f => {
+            f.src = "//" + location.host + location.pathname + "?" + f.src;
+        });
+
+        // a タグ（HTMLリンクだけ変換）
+        document.querySelectorAll("a[href]").forEach(a => {
+            let href = a.href;
+            if (href.match(/\.html?$|\.htm?$/i)) {
+                a.href = "//" + location.host + location.pathname + "?" + href;
+            }
+        });
+
+        // CSS（link rel=stylesheet）
+        Promise.all(
+            [...document.querySelectorAll('link[rel=stylesheet]')].map(link =>
+                fetchProxy(link.href, null, 0)
+            )
+        ).then(res => res.forEach(loadCSS));
+
+        // JS（scriptタグ）
+        Promise.all(
+            [...document.querySelectorAll('script[type="text/htmlpreview"]')].map(sc => {
+                if (sc.src)
+                    return fetchProxy(sc.src, null, 0)
+                return Promise.resolve(sc.innerHTML)
+            })
+        ).then(res => {
+            res.forEach(loadJS);
+            document.dispatchEvent(new Event("DOMContentLoaded"));
+        });
+    };
+
+    // -----------------------------
+    // メインロード処理
+    // -----------------------------
+    if (url && url.indexOf(location.hostname) < 0) {
+        fetchProxy(url, null, 0)
+            .then(loadHTML)
+            .catch(error => {
+                previewForm.style.display = "block";
+                previewForm.innerText = error;
+            });
+    } else {
+        previewForm.style.display = "block";
+    }
+
+})();
+</script>
+
+</body>
+</html>
