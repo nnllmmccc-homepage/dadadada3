@@ -1,147 +1,185 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <title>Universal HTML Preview</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 18px;
-        }
-        #previewform {
-            padding: 20px;
-            background: #eee;
-            border-radius: 8px;
-            display: none;
-            word-break: break-all;
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Universal HTML Preview</title>
+<style>
+body{background:#0f1724;color:#e6eef8;font-family:sans-serif;margin:0;padding:28px}
+.card{background:#0b1220;border-radius:12px;max-width:950px;margin:auto;padding:22px;box-shadow:0 8px 35px rgba(0,0,0,.5)}
+input[type=url]{width:100%;padding:12px;background:#071423;border:1px solid #1f2b3a;border-radius:8px;color:#fff}
+button,input[type=submit]{padding:10px 14px;border-radius:8px;border:0;background:#2563eb;color:#fff;font-weight:600;cursor:pointer;margin-top:8px}
+#error{white-space:pre-wrap;margin-top:16px;color:#ff7373}
+</style>
 </head>
 <body>
+<div class="card">
+<h2>Universal HTML Preview</h2>
+<p>GitHub / GitLab / Bitbucket / Raw / jsDelivr / 任意URL 全部プレビューできます。</p>
 
-<div id="previewform">Loading…</div>
+<form onsubmit="location.href='?'+encodeURIComponent(document.getElementById('url').value);return false;">
+  <input id="url" type="url" placeholder="HTML ファイルの URL を入力（何でもOK）" autofocus>
+  <input type="submit" value="Preview">
+</form>
+
+<div id="error"></div>
+</div>
 
 <script>
-(function () {
+(function(){
 
-    var previewForm = document.getElementById('previewform');
+// ==============================================
+// 1)  プレビュー対象の URL を取得
+// ==============================================
+let raw = decodeURIComponent(location.search.substring(1));
+if(!raw){ return; }
+let target = raw;
 
-    // ⭐ どんなURLでも読み込めるようにする
-    var url = decodeURIComponent(location.search.substring(1));
 
-    // -----------------------------
-    // CORS回避用プロキシ（3段階）
-    // -----------------------------
-    var fetchProxy = function (url, options, i) {
-        var proxy = [
-            "https://cors-anywhere.herokuapp.com/",
-            "https://yacdn.org/proxy/",
-            "https://api.codetabs.com/v1/proxy/?quest="
-        ];
+// ==============================================
+// 2)  GitHub / GitLab / Bitbucket を RAW 自動変換
+// ==============================================
+function toRawURL(url){
 
-        return fetch(proxy[i] + url, options).then(res => {
-            if (!res.ok) throw new Error("Cannot load " + url);
-            return res.text();
-        }).catch(err => {
-            if (i === proxy.length - 1) throw err;
-            return fetchProxy(url, options, i + 1);
-        });
-    };
+  // GitHub
+  if(url.includes("github.com") && url.includes("/blob/")){
+    return url.replace("github.com","raw.githubusercontent.com").replace("/blob/","/");
+  }
 
-    // -----------------------------
-    // HTML 読み込みと <base> 挿入
-    // -----------------------------
-    var loadHTML = function (data) {
-        if (!data) return;
+  // GitLab
+  if(url.includes("gitlab.com") && url.includes("/-/blob/")){
+    return url.replace("/-/blob/","/-/raw/");
+  }
 
-        data = data
-            .replace(/<head([^>]*)>/i,
-                '<head$1><base href="' + url + '">')
-            .replace(
-                /<script(\s*src=["'][^"']*["'])?(\s*type=["'](text|application)\/javascript["'])?/gi,
-                '<script type="text/htmlpreview"$1'
-            );
+  // Bitbucket
+  if(url.includes("bitbucket.org") && url.includes("/src/")){
+    return url.replace("/src/","/raw/");
+  }
 
-        setTimeout(() => {
-            document.open();
-            document.write(data);
-            document.close();
-            replaceAssets();
-        }, 10);
-    };
+  return url;
+}
 
-    // -----------------------------
-    // CSSインライン挿入
-    // -----------------------------
-    var loadCSS = function (data) {
-        var style = document.createElement("style");
-        style.innerHTML = data;
-        document.head.appendChild(style);
-    };
+target = toRawURL(target);
 
-    // -----------------------------
-    // JSインライン実行
-    // -----------------------------
-    var loadJS = function (data) {
-        var script = document.createElement("script");
-        script.innerHTML = data;
-        document.body.appendChild(script);
-    };
 
-    // -----------------------------
-    // すべての CSS, JS, iframe をプロキシ化
-    // -----------------------------
-    var replaceAssets = function () {
+// ==============================================
+// 3)  万能 CORS プロキシ（3段フェイルオーバー）
+// ==============================================
+let PROXIES = [
+  "https://cors-anywhere.herokuapp.com/",
+  "https://api.allorigins.win/raw?url=",
+  "https://api.codetabs.com/v1/proxy/?quest="
+];
 
-        // iframe 対応
-        document.querySelectorAll("iframe[src],frame[src]").forEach(f => {
-            f.src = "//" + location.host + location.pathname + "?" + f.src;
-        });
+function fetchAny(url,i=0){
+  return fetch(PROXIES[i]+url)
+    .then(r=>{
+      if(!r.ok) throw new Error();
+      return r.text();
+    })
+    .catch(e=>{
+      if(i>=PROXIES.length-1) throw e;
+      return fetchAny(url,i+1);
+    });
+}
 
-        // a タグ（HTMLリンクだけ変換）
-        document.querySelectorAll("a[href]").forEach(a => {
-            let href = a.href;
-            if (href.match(/\.html?$|\.htm?$/i)) {
-                a.href = "//" + location.host + location.pathname + "?" + href;
-            }
-        });
 
-        // CSS（link rel=stylesheet）
-        Promise.all(
-            [...document.querySelectorAll('link[rel=stylesheet]')].map(link =>
-                fetchProxy(link.href, null, 0)
-            )
-        ).then(res => res.forEach(loadCSS));
+// ==============================================
+// 4)  HTML 読み込んで書き換え（CSS/JS 全対応）
+// ==============================================
+function injectHTML(html){
 
-        // JS（scriptタグ）
-        Promise.all(
-            [...document.querySelectorAll('script[type="text/htmlpreview"]')].map(sc => {
-                if (sc.src)
-                    return fetchProxy(sc.src, null, 0)
-                return Promise.resolve(sc.innerHTML)
-            })
-        ).then(res => {
-            res.forEach(loadJS);
-            document.dispatchEvent(new Event("DOMContentLoaded"));
-        });
-    };
+  // <base> を挿入（相対パスを修正）
+  html = html.replace(/<head([^>]*)>/i,
+    `<head$1><base href="${target}">`);
 
-    // -----------------------------
-    // メインロード処理
-    // -----------------------------
-    if (url && url.indexOf(location.hostname) < 0) {
-        fetchProxy(url, null, 0)
-            .then(loadHTML)
-            .catch(error => {
-                previewForm.style.display = "block";
-                previewForm.innerText = error;
-            });
-    } else {
-        previewForm.style.display = "block";
+  // script をブラウザで即実行されないように変更
+  html = html.replace(/<script/gi,'<script type="text/htmlpreview"');
+
+  setTimeout(()=>{
+    document.open();
+    document.write(html);
+    document.close();
+
+    rewriteAssets();
+  },20);
+}
+
+
+// ==============================================
+// 5)  ページ内部のリンク・CSS・JS をすべて書き換え
+// ==============================================
+function rewriteAssets(){
+
+  // iframe
+  document.querySelectorAll("iframe[src],frame[src]").forEach(f=>{
+    let src=f.src;
+    if(!src) return;
+    if(src.startsWith("http")){
+      f.src = location.origin + location.pathname + "?" + src;
     }
+  });
+
+  // a[href]
+  document.querySelectorAll("a[href]").forEach(a=>{
+    let h=a.href;
+    if(h.endsWith(".html") || h.endsWith(".htm")){
+      a.href = location.origin+location.pathname+"?"+h;
+    }
+  });
+
+  // CSS
+  document.querySelectorAll('link[rel="stylesheet"]').forEach(link=>{
+    let href=link.href;
+    if(!href) return;
+    fetchAny(href).then(css=>{
+      let style=document.createElement("style");
+      style.innerHTML=css;
+      document.head.appendChild(style);
+    });
+    link.remove();
+  });
+
+  // JS
+  let scripts = document.querySelectorAll('script[type="text/htmlpreview"]');
+  let load = Promise.resolve();
+
+  scripts.forEach(sc=>{
+    load = load.then(()=>{
+      if(sc.src){
+        return fetchAny(sc.src).then(code=>{
+          let s=document.createElement("script");
+          s.innerHTML=code;
+          document.body.appendChild(s);
+        });
+      } else {
+        let s=document.createElement("script");
+        s.innerHTML=sc.innerHTML;
+        document.body.appendChild(s);
+      }
+    });
+  });
+
+  load.then(()=>{
+    try{
+      document.dispatchEvent(new Event("DOMContentLoaded"));
+    }catch(e){}
+  });
+
+}
+
+
+// ==============================================
+// 6) 実行
+// ==============================================
+fetchAny(target)
+  .then(injectHTML)
+  .catch(e=>{
+    document.getElementById("error").textContent =
+      "読み込みに失敗: "+target+"\n\n"+e;
+  });
 
 })();
 </script>
-
 </body>
 </html>
